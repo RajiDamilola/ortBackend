@@ -171,10 +171,6 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(express.static(__dirname));
-app.use('/js', express.static(__dirname));
-app.use('/css', express.static(__dirname));
-
 app.get(['/admin', '/admin/'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 const formOnly = multer().none();
@@ -373,6 +369,10 @@ app.get(['/data.js', '/js/data.js'], wrap(async (req, res) => {
   res.setHeader('Surrogate-Control', 'no-store');
   res.send(scriptContent);
 }));
+
+app.use(express.static(__dirname));
+app.use('/js', express.static(__dirname));
+app.use('/css', express.static(__dirname));
 
 app.get('*', (req, res, next) => { 
   if (req.url.startsWith('/api') || req.url.includes('.')) return next();
