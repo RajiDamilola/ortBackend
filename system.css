@@ -1,0 +1,479 @@
+/* =========================================================
+   ORT WATT — Design System
+   ---------------------------------------------------------
+   DIRECTION: "the marked-up datasheet".
+
+   The logo is navy printed ON yellow, so yellow is treated as a
+   GROUND here, not as an accent spark on a dark page. The company's
+   actual work is reading technical documents and annotating them,
+   so the page behaves like a specification sheet an engineer has
+   marked up: a reference rail down the edge, measured values, and
+   yellow blocks where ORT has made a judgement.
+
+   The display face is a MONOSPACE. That is the deliberate risk:
+   headlines set in mono read as instrument rather than marketing,
+   which is what this company is.
+
+   NAMING: the semantic tokens (--surface-*, --text-*, --rule-*) are
+   the real system. The older names at the bottom are kept as
+   aliases so every existing component and script keeps working.
+   ========================================================= */
+
+:root{
+  /* ---------- Brand, sampled from the logo file ---------- */
+  --sun:#FFE810;          /* brand yellow — the primary            */
+  --sun-deep:#EFD400;     /* pressed / hover                        */
+  --sun-wash:#FFF7B8;     /* tint for quiet fills                   */
+
+  /* Yellow's partner is a warm carbon, not the logo navy. Yellow and
+     blue sit on opposite sides of the wheel and fight each other at
+     this saturation; yellow against a warm near-black is the pairing
+     that reads as engineering rather than as a clash. Navy is kept
+     for small accents only, so the logo still belongs. */
+  --carbon:#1A1A18;       /* headings, dark bands, type on yellow  */
+  --carbon-2:#26261F;
+  --carbon-3:#33332A;
+  --navy:#0E2978;         /* logo navy — SMALL accents only        */
+  --flag:#E01E14;         /* logo red — annotation marks only      */
+  --ink:var(--carbon);    /* alias: "ink" now means carbon         */
+  --ink-deep:#0E0E0C;
+
+  /* ---------- Neutrals ---------- */
+  --paper:#FBFBF8;        /* page ground — warm white, not cream   */
+  --paper-2:#F1F0EA;
+  --paper-3:#E4E3DA;
+  --graphite:#1A1A18;
+  --slate:#5E5E55;        /* warm greys, to sit with the yellow    */
+  --mist:#6E6E63;
+
+  /* ---------- Status: the ORT label system ---------- */
+  --st-approved:#E01E14;
+  --st-verified:#0B7F3D;
+  --st-premium:#0E2978;
+  --st-selected:#5C6472;
+  --brand-navy:#0E2978;
+
+  /* ---------- Semantic surfaces (LIGHT is default) ---------- */
+  --surface-0:#FBFBF8;
+  --surface-1:#FFFFFF;
+  --surface-2:#F1F0EA;
+  --surface-3:#E4E3DA;
+  --surface-ink:#1A1A18;   /* dark bands are carbon, not navy */
+  --surface-sun:#FFE810;
+
+  --text-1:#1A1A18;
+  --text-2:#5E5E55;
+  --text-3:#6E6E63;
+  --text-on-sun:#1A1A18;   /* carbon on yellow: the strongest pair */
+  --text-on-ink:#F7F7F2;
+
+  --rule-1:rgba(26,26,24,.14);
+  --rule-2:rgba(26,26,24,.07);
+  --rule-3:rgba(26,26,24,.34);
+
+  /* Accent used as TEXT. Yellow is illegible on paper, so the
+     text-safe accent is navy; yellow stays a fill. */
+  --accent-ink:#1A1A18;
+
+  /* ---------- Type: MOBILE FIRST ----------
+     These are the phone values. They are the base because most
+     visitors are on a phone; the denser desktop scale is layered on
+     at 768px below, not the other way round.
+
+     Nothing here drops under 14px. The previous scale used 13px for
+     body copy in 35 rules and 11px in 36 more, which is a desktop
+     density applied to a hand-held screen. */
+  --f-d:'Azeret Mono','IBM Plex Mono',ui-monospace,monospace;
+  --f-b:'Archivo','Inter',system-ui,sans-serif;
+  --f-m:'Azeret Mono',ui-monospace,monospace;
+  --f-ar:'IBM Plex Sans Arabic',system-ui,sans-serif;
+
+  /* Display. Monospace sets ~1.7x wider than a grotesque, so the
+     phone sizes are held down hard to keep 2-3 words per line. */
+  --t-mega:2.1rem;
+  --t-hero:1.75rem;
+  --t-h1:1.5rem;
+  --t-h2:1.3rem;
+  --t-h3:1.1rem;
+
+  /* Reading sizes */
+  --t-lede:1.0625rem;   /* 17px */
+  --t-body:1rem;        /* 16px */
+  --t-sm:.9375rem;      /* 15px  — was 14 */
+  --t-xs:.875rem;       /* 14px  — was 13 */
+  --t-mono:.75rem;      /* 12px  — was 11 */
+
+  /* ---------- Space: MOBILE FIRST ----------
+     Roomier on a phone than the old values, because crowding is
+     what made the mobile site feel like an afterthought. */
+  --gut:1.35rem;        /* page side padding      */
+  --sec:3.25rem;        /* space between sections */
+  --blk:1.75rem;        /* space inside a section */
+  --rail:0;             /* no side rail on phones */
+  --max:1380px;
+  --tap:2.75rem;        /* 44px minimum touch target */
+
+  --ease:cubic-bezier(.2,.7,.3,1);
+  --ease-in-out:cubic-bezier(.6,0,.2,1);
+
+  /* ---------- Aliases: keep existing components working ---------- */
+  --navy-950:var(--surface-0);
+  --navy-900:var(--surface-1);
+  --navy-850:var(--surface-2);
+  --navy-800:var(--surface-3);
+  --navy-700:var(--surface-3);
+  --navy-600:var(--text-3);
+  --on-dark:var(--text-1);
+  --on-dark-2:var(--text-2);
+  --on-dark-3:var(--text-3);
+  --hair:var(--rule-1);
+  --hair-strong:var(--rule-3);
+  --hair-light:var(--rule-1);
+  --hair-light-2:var(--rule-2);
+  --line:var(--rule-1);
+  --line-strong:var(--rule-3);
+  --line-text:var(--text-2);
+  --bone:var(--surface-2);
+  --bone-2:var(--surface-3);
+  --ink-2:var(--text-2);
+  --ink-3:var(--text-3);
+  --yellow:var(--sun);
+  --yellow-deep:var(--sun-deep);
+  --signal:var(--sun);
+  --alert:var(--flag);
+}
+
+
+/* =========================================================
+   LARGER SCREENS
+   ---------------------------------------------------------
+   The phone layout above is the base. These are the overrides
+   that take advantage of a bigger canvas: a denser type scale,
+   wider gutters, more air between sections.
+   ========================================================= */
+@media(min-width:600px){
+  :root{
+    --gut:1.85rem; --sec:4.25rem; --blk:2.25rem;
+    --t-mega:2.75rem; --t-hero:2.15rem; --t-h1:1.8rem; --t-h2:1.45rem;
+  }
+}
+@media(min-width:900px){
+  :root{
+    --gut:2.25rem; --sec:5.5rem; --blk:2.75rem; --rail:9.5rem;
+    --t-mega:3.25rem; --t-hero:2.6rem; --t-h1:2.05rem; --t-h2:1.6rem; --t-h3:1.2rem;
+    --t-lede:1.1rem; --t-sm:.9rem; --t-xs:.8375rem; --t-mono:.7rem;
+  }
+}
+@media(min-width:1280px){
+  :root{
+    --gut:2.5rem; --sec:6.5rem;
+    --t-mega:3.6rem; --t-hero:2.9rem; --t-h1:2.25rem; --t-h2:1.7rem; --t-h3:1.25rem;
+    --t-lede:1.15rem;
+  }
+}
+
+/* =========================================================
+   DARK THEME
+   The night shift of the same document: the paper darkens, the
+   yellow does not change because it is the brand.
+   ========================================================= */
+[data-theme="dark"]{
+  --surface-0:#131311;
+  --surface-1:#1B1B18;
+  --surface-2:#232320;
+  --surface-3:#2E2E29;
+  --text-1:#F2F2EC;
+  --text-2:#ADADA1;
+  --text-3:#87877B;
+  --rule-1:rgba(242,242,236,.15);
+  --rule-2:rgba(242,242,236,.08);
+  --rule-3:rgba(242,242,236,.38);
+  --paper-2:#232320;
+  --paper-3:#2E2E29;
+  --accent-ink:#FFE810;   /* on a dark ground yellow reads as text */
+  --brand-navy:#8BA0EC;   /* logo navy is invisible on dark; lift it */
+}
+
+/* ---------------------------------------------------------
+   Base
+   --------------------------------------------------------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+/* Horizontal overflow guard.
+   The off-canvas drawers are position:fixed and parked one screen
+   width to the inline-end. A fixed element's containing block is the
+   VIEWPORT, so overflow on <body> does not clip it — the page gained
+   a horizontal scrollbar on phones. Overflow on the ROOT element
+   propagates to the viewport, which does clip it.
+   `clip` is used rather than `hidden` because `hidden` would turn the
+   root into a scroll container and break position:sticky headers. */
+html{
+  -webkit-text-size-adjust:100%;scroll-behavior:smooth;
+  overflow-x:clip;max-inline-size:100%;
+}
+body{
+  background:var(--surface-0);color:var(--text-1);
+  font-family:var(--f-b);font-size:var(--t-body);line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:clip;max-inline-size:100%;
+  /* Long model numbers and URLs must never widen a track */
+  overflow-wrap:break-word;
+}
+[lang="ar"] body,[dir="rtl"] body{font-family:var(--f-ar);line-height:1.85;}
+[dir="rtl"] .ltr{direction:ltr;display:inline-block;unicode-bidi:isolate;}
+img,svg{display:block;max-inline-size:100%;}
+a{color:inherit;text-decoration:none;}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+input,select,textarea{font:inherit;color:inherit;}
+::selection{background:var(--sun);color:var(--ink);}
+
+:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px;}
+
+.skip{
+  position:absolute;inset-block-start:-100%;inset-inline-start:0;z-index:400;
+  background:var(--sun);color:var(--ink);padding:.75rem 1.25rem;font-weight:600;
+}
+.skip:focus{inset-block-start:0;}
+
+/* ---------------------------------------------------------
+   Type — display is mono; tight tracking stops it reading as code
+   --------------------------------------------------------- */
+h1,h2,h3,h4,.d{
+  font-family:var(--f-d);font-weight:700;
+  letter-spacing:-.045em;line-height:1.06;
+}
+[dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3,[dir="rtl"] h4{
+  font-family:var(--f-ar);letter-spacing:0;line-height:1.35;
+}
+.t-mega{font-size:var(--t-mega);}
+.t-hero{font-size:var(--t-hero);}
+.t-h1{font-size:var(--t-h1);}
+.t-h2{font-size:var(--t-h2);}
+.t-h3{font-size:var(--t-h3);letter-spacing:-.03em;}
+.lede{font-size:var(--t-lede);line-height:1.6;color:var(--text-2);}
+.muted{color:var(--text-2);}
+.dim{color:var(--text-3);}
+.sm{font-size:var(--t-sm);}
+.xs{font-size:var(--t-xs);}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums;}
+
+/* The small technical label. Carries real reference data only. */
+.code{
+  font-family:var(--f-m);font-size:var(--t-mono);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--text-3);font-weight:500;
+}
+
+/* ---------------------------------------------------------
+   Layout
+   --------------------------------------------------------- */
+.wrap{max-inline-size:var(--max);margin-inline:auto;padding-inline:var(--gut);}
+.sec{padding-block:var(--sec);}
+.hr{block-size:1px;background:var(--rule-1);border:0;}
+
+/* THE REFERENCE RAIL — the page's structural signature.
+   A narrow column on the inline-start edge carrying section
+   reference data, mirroring a datasheet's revision column. */
+.field{
+  display:grid;grid-template-columns:var(--rail) minmax(0,1fr);
+  gap:clamp(1.25rem,3vw,3rem);align-items:start;
+}
+@media(max-width:820px){.field{grid-template-columns:1fr;gap:1rem;}}
+.field-rail{
+  position:sticky;inset-block-start:6rem;
+  border-inline-start:2px solid var(--ink);padding-inline-start:.85rem;
+  display:grid;gap:.3rem;
+}
+[data-theme="dark"] .field-rail{border-inline-start-color:var(--sun);}
+@media(max-width:820px){
+  .field-rail{
+    position:static;border-inline-start:0;padding-inline-start:0;
+    border-block-start:2px solid var(--ink);padding-block-start:.6rem;
+    display:flex;gap:1.25rem;flex-wrap:wrap;
+  }
+  [data-theme="dark"] .field-rail{border-block-start-color:var(--sun);}
+}
+.field-rail b{
+  display:block;font-family:var(--f-m);font-size:var(--t-mono);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink);font-weight:700;
+}
+[data-theme="dark"] .field-rail b{color:var(--sun);}
+.field-rail span{
+  font-family:var(--f-m);font-size:var(--t-mono);letter-spacing:.1em;
+  color:var(--text-3);text-transform:uppercase;
+}
+
+/* Surfaces */
+.on-sun{background:var(--surface-sun);color:var(--text-on-sun);}
+.on-sun .muted,.on-sun .lede{color:rgba(26,26,24,.78);}
+.on-sun .code{color:rgba(26,26,24,.6);}
+.on-sun h1,.on-sun h2,.on-sun h3,.on-sun h4{color:var(--ink);}
+.on-ink{background:var(--surface-ink);color:var(--text-on-ink);}
+.on-ink .muted,.on-ink .lede{color:rgba(242,244,250,.72);}
+.on-ink .code{color:rgba(242,244,250,.55);}
+[data-theme="dark"] .on-ink{background:var(--surface-2);}
+.light{background:var(--surface-2);color:var(--text-1);}
+
+.row{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;}
+.stack>*+*{margin-block-start:1.15rem;}
+.narrow{max-inline-size:46rem;}
+.sr-only{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);}
+
+/* ---------------------------------------------------------
+   Buttons — square, printed. Primary is a yellow block with navy
+   type: the logo relationship, applied to a control.
+   --------------------------------------------------------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
+  padding:.85rem 1.4rem;font-family:var(--f-m);font-size:var(--t-xs);
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  border:1.5px solid transparent;transition:
+    background .18s var(--ease),color .18s var(--ease),
+    border-color .18s var(--ease),transform .12s var(--ease);
+}
+[dir="rtl"] .btn{letter-spacing:0;text-transform:none;font-family:var(--f-ar);}
+.btn:active{transform:translateY(1px);}
+.btn .arw{transition:transform .22s var(--ease);}
+.btn:hover .arw{transform:translateX(3px);}
+[dir="rtl"] .btn .arw{transform:scaleX(-1);}
+[dir="rtl"] .btn:hover .arw{transform:scaleX(-1) translateX(3px);}
+
+.btn-signal{background:var(--sun);color:var(--ink);border-color:var(--sun);}
+.btn-signal:hover{background:var(--sun-deep);border-color:var(--sun-deep);}
+.btn-solid{background:var(--ink);color:#fff;border-color:var(--ink);}
+.btn-solid:hover{background:var(--sun);color:var(--ink);border-color:var(--sun);}
+.btn-line{border-color:var(--rule-3);color:var(--text-1);}
+.btn-line:hover{border-color:var(--ink);background:var(--ink);color:#fff;}
+[data-theme="dark"] .btn-solid{background:var(--sun);color:var(--ink);border-color:var(--sun);}
+[data-theme="dark"] .btn-solid:hover{background:#fff;border-color:#fff;}
+[data-theme="dark"] .btn-line:hover{background:var(--sun);color:var(--ink);border-color:var(--sun);}
+.on-sun .btn-line{border-color:rgba(26,26,24,.42);color:var(--ink);}
+.on-sun .btn-line:hover{background:var(--ink);color:var(--sun);border-color:var(--ink);}
+.on-sun .btn-solid{background:var(--ink);color:var(--sun);border-color:var(--ink);}
+.on-sun .btn-solid:hover{background:#fff;color:var(--ink);border-color:#fff;}
+.on-ink .btn-line{border-color:rgba(242,244,250,.34);color:var(--text-on-ink);}
+.on-ink .btn-line:hover{background:var(--sun);color:var(--ink);border-color:var(--sun);}
+.btn-sm{padding:.55rem 1rem;font-size:var(--t-mono);}
+.btn-lg{padding:1.05rem 1.7rem;font-size:var(--t-sm);}
+
+/* Link: a rule that thickens, like an annotation underline */
+.lnk{
+  display:inline-flex;align-items:center;gap:.45rem;
+  font-family:var(--f-m);font-size:var(--t-xs);font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;padding-block-end:.15rem;
+  background-image:linear-gradient(currentColor,currentColor);
+  background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%;
+  transition:background-size .25s var(--ease),color .18s var(--ease);
+}
+[dir="rtl"] .lnk{background-position:100% 100%;letter-spacing:0;text-transform:none;font-family:var(--f-ar);}
+.lnk:hover{background-size:100% 2px;}
+.lnk-signal{color:var(--accent-ink);}
+
+/* ---------------------------------------------------------
+   Motion — one orchestrated reveal, not scattered effects
+   --------------------------------------------------------- */
+.rv{opacity:0;transform:translateY(12px);
+  transition:opacity .55s var(--ease),transform .55s var(--ease);}
+.rv.in{opacity:1;transform:none;}
+.d1{transition-delay:.07s;} .d2{transition-delay:.14s;}
+.d3{transition-delay:.21s;} .d4{transition-delay:.28s;}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important;
+  }
+  .rv{opacity:1;transform:none;}
+}
+@media(prefers-reduced-motion:no-preference){
+  body,.tile,.svc,.cart-drawer,.ch-box,.mega,.hdr{
+    transition:background-color .25s var(--ease),color .25s var(--ease),border-color .25s var(--ease);
+  }
+}
+
+/* Theme toggle icon swap */
+.theme-t{position:relative;}
+.theme-t svg{transition:transform .35s var(--ease),opacity .2s var(--ease);}
+.theme-t .t-moon{position:absolute;inset:0;margin:auto;}
+.theme-t .t-sun{opacity:0;transform:rotate(-90deg) scale(.6);}
+.theme-t .t-moon{opacity:1;transform:none;}
+[data-theme="dark"] .theme-t .t-sun{opacity:1;transform:none;}
+[data-theme="dark"] .theme-t .t-moon{opacity:0;transform:rotate(90deg) scale(.6);}
+
+/* =========================================================
+   OVERFLOW SAFETY
+   ---------------------------------------------------------
+   Grid and flex children default to min-width:auto, meaning they
+   refuse to shrink below their content. One long word or one
+   nowrap price is then enough to push a whole track wider than a
+   phone screen. Allowing these to shrink is what keeps every
+   layout inside the viewport.
+   ========================================================= */
+.split>*,.field>*,.hero-top>*,.hero-say,.cart-layout>*,.dash>*,
+.pdp>*,.auth>*,.sec-head>*,.head-row>*,.diagram>*,
+.eq-card>*,.cart-line>*,.crit>*,.fn-row>*,.legend-row>*,.co-line>*,
+.tile,.hcard,.svc,.jrn-s,.dg-cell,.jstep,.rail-s,.stat{
+  min-inline-size:0;
+}
+
+/* Media never exceeds its box */
+img,svg,video,canvas{max-inline-size:100%;block-size:auto;}
+
+/* Wide data always scrolls inside its own box, never the page */
+.tbl-scroll,.cmp-scroll{max-inline-size:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+/* Off-canvas panels are removed from the layout when closed, so they
+   cannot be tabbed into invisibly or add to scrollable area. */
+.drawer:not(.open),.cart-drawer:not(.open){visibility:hidden;pointer-events:none;}
+.drawer,.cart-drawer{max-inline-size:100vw;}
+
+/* =========================================================
+   TOUCH TARGETS
+   ---------------------------------------------------------
+   Keyed to `pointer:coarse` rather than a width breakpoint, so a
+   finger gets a 44px target on a tablet too, while a mouse keeps
+   the tighter desktop controls.
+
+   Measured before this rule: quantity steppers 25.6px, language
+   buttons 26.4px, small buttons 30.6px, icon buttons 35.2px —
+   all under the 44px both Apple and Google recommend.
+   ========================================================= */
+@media(pointer:coarse){
+  .ico,.qty-b{inline-size:var(--tap);block-size:var(--tap);}
+  .qty-i{block-size:var(--tap);inline-size:3.25rem;font-size:var(--t-sm);}
+  .lang button{min-block-size:var(--tap);min-inline-size:2.9rem;font-size:var(--t-xs);}
+  .btn{min-block-size:var(--tap);padding:.9rem 1.35rem;}
+  .btn-sm{min-block-size:2.5rem;padding:.7rem 1.1rem;}
+  .btn-lg{min-block-size:3.15rem;}
+  .tab{min-block-size:var(--tap);padding-inline:1.15rem;}
+  .chip{min-block-size:2.5rem;display:inline-flex;align-items:center;}
+  .lnk,.link{min-block-size:2.5rem;display:inline-flex;align-items:center;}
+  .qty-x{min-block-size:var(--tap);display:inline-flex;align-items:center;padding-inline:.5rem;}
+  .gate-opt{padding-block:1.35rem;}
+  .drawer-g a{padding-block:.85rem;}      /* comfortable list rows */
+  .dnav a{padding-block:.85rem;}
+  .mega a{padding-block:.8rem;}
+  .legend-row{padding-block:1rem;}
+  /* Inputs at 16px stop iOS zooming the page on focus */
+  input,select,textarea{font-size:1rem;min-block-size:var(--tap);}
+  textarea{min-block-size:8rem;}
+}
+
+/* =========================================================
+   MOBILE READING RHYTHM
+   ---------------------------------------------------------
+   Crowding, not width, was what made the phone layout feel like an
+   afterthought. These give headings and copy room to breathe and
+   stop long measures running edge to edge.
+   ========================================================= */
+@media(max-width:599px){
+  h1,h2,h3,h4{line-height:1.18;letter-spacing:-.035em;}
+  [dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3,[dir="rtl"] h4{line-height:1.4;}
+  p{line-height:1.65;}
+  .lede{line-height:1.6;}
+  /* A comfortable measure; prose never spans the full width */
+  .lede,.muted,section p{max-inline-size:38ch;}
+  .sec{padding-block:var(--sec);}
+  .sec-head{margin-block-end:var(--blk);padding-block-end:1.15rem;}
+  /* Stacked CTAs go full width so they are easy to hit */
+  .row .btn,.hero-cta .btn,.cart-actions .btn{inline-size:100%;}
+  .row{gap:.65rem;}
+}

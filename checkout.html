@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Checkout — ORT WATT</title>
+<meta name="description" content="Confirm your details. ORT WATT sends a written order confirmation with shipping and final total before any payment is taken.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main>
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs">
+        <a href="index.html" data-t="nav.home"></a> <span>/</span>
+        <a href="cart.html" data-t="cart.title"></a> <span>/</span>
+        <span data-t="checkout.title"></span>
+      </nav>
+      <h1 data-t="checkout.title"></h1>
+      <p class="lede" data-t="checkout.sub"></p>
+    </div>
+  </section>
+  <section class="sec wrap"><div id="co-root"></div></section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>
+(function(){
+  function render(){
+    const T = cartTotals();
+    const root = document.getElementById('co-root');
+    if(T.isEmpty){
+      root.innerHTML = `<div class="empty"><h3>${t('cart.emptyTitle')}</h3>
+        <p>${t('cart.emptyBody')}</p>
+        <a class="btn btn-signal" href="equipment.html">${t('cart.browse')} <span class="arw">→</span></a></div>`;
+      return;
+    }
+    root.innerHTML = `
+    <div class="cart-layout">
+      <div>
+        <div class="co-notice">
+          <strong>${t('checkout.notice')}</strong>
+          ${T.hasQuoteItems ? `<p>${t('checkout.mixedNote')}</p>` : ''}
+        </div>
+        <form class="form" id="co-form" style="margin-block-start:2rem">
+          <div class="msg err" hidden></div>
+          <div class="msg ok" hidden>${t('form.successBody')}</div>
+
+          <div class="index"><span class="n">01</span> <span>${t('checkout.step1')}</span></div>
+
+          <!-- Signed in: show what we already hold and move on.
+               Signed out: offer to sign in, or continue as a guest.
+               Nothing a customer has already told us is asked twice. -->
+          <div id="who"></div>
+
+          <div class="index" style="margin-block-start:1rem"><span class="n">02</span> <span>${t('checkout.step2')}</span></div>
+
+          <!-- A freight carrier cannot deliver a pallet to "Nigeria,
+               Lagos". This section collects a real, deliverable address
+               and explains why it is being asked for. -->
+          <h3 class="t-h3" style="margin-block:.5rem .35rem">${t('form.deliveryHead')}</h3>
+          <p class="xs dim" style="margin-block-end:1rem;max-inline-size:46ch">${t('form.deliveryWhy')}</p>
+
+          <div class="field"><label for="addr1">${t('form.addr1')}</label>
+            <input id="addr1" name="addr1" autocomplete="address-line1"
+                   placeholder="${t('form.addr1Ph')}" required></div>
+
+          <div class="field"><label for="addr2">${t('form.addr2')} <span class="opt">${t('form.optional')}</span></label>
+            <input id="addr2" name="addr2" autocomplete="address-line2"
+                   placeholder="${t('form.addr2Ph')}"></div>
+
+          <div class="f-row">
+            <div class="field"><label for="city">${t('form.city')}</label>
+              <input id="city" name="city" autocomplete="address-level2" required></div>
+            <div class="field"><label for="state">${t('form.state')} <span class="opt">${t('form.optional')}</span></label>
+              <input id="state" name="state" autocomplete="address-level1"></div>
+          </div>
+
+          <div class="f-row">
+            <div class="field"><label for="country">${t('form.country')}</label>
+              <select id="country" name="country" autocomplete="country-name" required></select></div>
+            <div class="field"><label for="postcode">${t('form.postcode')} <span class="opt">${t('form.optional')}</span></label>
+              <input id="postcode" name="postcode" autocomplete="postal-code"></div>
+          </div>
+
+          <div class="f-row">
+            <div class="field"><label for="recipient">${t('form.recipient')} <span class="opt">${t('form.optional')}</span></label>
+              <input id="recipient" name="recipient" placeholder="${t('form.recipientPh')}"></div>
+            <div class="field"><label for="recipient_phone">${t('form.recipientPhone')}</label>
+              <input id="recipient_phone" name="recipient_phone" type="tel"
+                     autocomplete="tel" required></div>
+          </div>
+
+          <div class="field"><label for="delivery_notes">${t('form.deliveryNotes')} <span class="opt">${t('form.optional')}</span></label>
+            <textarea id="delivery_notes" name="delivery_notes" rows="3"
+                      placeholder="${t('form.deliveryNotesPh')}"></textarea></div>
+          <div class="field"><label for="message">${t('form.notes')} <span class="opt">${t('form.optional')}</span></label>
+            <textarea id="message" name="message"></textarea></div>
+
+          <button class="btn btn-signal" type="submit" style="justify-content:center">
+            ${t('checkout.place')} <span class="arw">→</span></button>
+          <a class="link" href="cart.html">← ${t('checkout.back')}</a>
+        </form>
+      </div>
+
+      <aside class="cart-aside">
+        <div class="index" style="margin-block-end:1.25rem"><span class="n">03</span> <span>${t('checkout.step3')}</span></div>
+        <div class="co-lines">${T.lines.map(l=>`
+          <div class="co-line">
+            <span class="co-qty">${tNum(l.qty)}×</span>
+            <span><span class="ltr">${l.product.brand} ${l.product.model}</span></span>
+            <span class="num">${l.mode==='buy'?tMoney(l.lineTotal):t('cart.byQuote')}</span>
+          </div>`).join('')}</div>
+        ${cartSummaryHTML(T)}
+      </aside>
+    </div>`;
+
+    // Send the order as a structured request through the existing API.
+    const form = document.getElementById('co-form');
+    form?.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const err=form.querySelector('.msg.err'), ok=form.querySelector('.msg.ok');
+      err.hidden=true; ok.hidden=true;
+      const btn=form.querySelector('[type=submit]'); btn.disabled=true;
+      try{
+        const T2=cartTotals();
+        const fd=new FormData(form);
+        fd.append('kind','order');
+        // Human-readable order body so staff can read it without tooling
+        // The team reads this as plain text in an email, so the
+        // delivery address has to be inside it — a freight quote is
+        // impossible without the full address and a contact number.
+        const addr = [
+          fd.get('recipient') || fd.get('full_name'),
+          fd.get('addr1'), fd.get('addr2'),
+          [fd.get('city'), fd.get('state'), fd.get('postcode')].filter(Boolean).join(', '),
+          fd.get('country'),
+        ].filter(Boolean).join('\n');
+
+        fd.set('message',
+          'ITEMS\n'
+          + T2.lines.map(l=>`${l.qty} x ${l.product.brand} ${l.product.model} (${l.mode==='buy'?tMoney(l.lineTotal):'quotation'})`).join('\n')
+          + `\n\nSubtotal: ${tMoney(T2.subtotal)}\nORT fee: ${tMoney(T2.fee)}\nGoods total: ${tMoney(T2.total)}`
+          + '\nDelivery: to be quoted'
+          + `\n\nDELIVER TO\n${addr}`
+          + `\nPhone at delivery: ${fd.get('recipient_phone') || fd.get('mobile') || '—'}`
+          + (fd.get('whatsapp') ? `\nWhatsApp: ${fd.get('whatsapp')}` : '')
+          + `\nContact phone: ${fd.get('mobile') || '—'}`
+          + (fd.get('delivery_notes') ? `\n\nDELIVERY NOTES\n${fd.get('delivery_notes')}` : '')
+          + (fd.get('message') ? `\n\nORDER NOTES\n${fd.get('message')}` : ''));
+        const res = await ortApi.submitRequest(fd);
+        cartClear();
+        // A dialog, not an inline line of green text. Submitting an
+        // order is the most significant thing a customer does here,
+        // and the page behind it has just emptied.
+        showSubmitted(res && res.reference);
+      }catch(ex){ err.textContent=ex.message; err.hidden=false; btn.disabled=false; }
+    });
+  }
+  /* A typed country field produces "UAE", "U.A.E", "Emirates" and
+     "dubai" in the same database column, which makes shipping zones
+     impossible to apply. A list keeps it consistent. */
+  const COUNTRIES = ['United Arab Emirates','Saudi Arabia','Qatar','Kuwait','Bahrain','Oman',
+    'Nigeria','Ghana','Benin','Togo','C\u00f4te d\u2019Ivoire','Senegal','Cameroon','Kenya',
+    'Tanzania','Uganda','Rwanda','Ethiopia','South Africa','Egypt','Morocco','Algeria','Tunisia',
+    'France','Belgium','Netherlands','Germany','Spain','Italy','United Kingdom',
+    'India','Pakistan','Bangladesh','Turkey','United States','Canada'];
+
+  function fillCountries(){
+    const sel = document.getElementById('country');
+    if(!sel || sel.options.length) return;
+    sel.innerHTML = '<option value=""></option>' +
+      COUNTRIES.map(c=>`<option value="${c}">${c}</option>`).join('') +
+      '<option value="__other">' + t('common.other') + '</option>';
+    const saved = localStorage.getItem('ort-country');
+    if(saved) sel.value = saved;
+    sel.addEventListener('change', ()=> localStorage.setItem('ort-country', sel.value));
+  }
+
+  /* Identity block. The account already holds name, email, phone and
+     WhatsApp, so a signed-in customer is shown them rather than asked
+     for them again. A guest is offered the shortcut but never forced
+     to create an account — a mandatory signup is one of the largest
+     causes of abandoned carts. */
+  function renderWho(){
+    const box = document.getElementById('who');
+    if(!box) return;
+    const u = ortAuth.user;
+
+    if(u){
+      box.innerHTML = `
+        <div class="who-card">
+          <div class="who-row">
+            <div>
+              <strong>${[u.first_name,u.last_name].filter(Boolean).join(' ')}</strong>
+              <div class="sm muted">${u.email}</div>
+              ${u.mobile ? `<div class="sm muted ltr">${u.mobile}</div>` : ''}
+            </div>
+            <a class="lnk" href="dashboard.html#profile">${t('checkout.editDetails')}</a>
+          </div>
+          ${!u.mobile ? `<p class="who-warn">${t('checkout.needPhone')}</p>` : ''}
+        </div>
+        <input type="hidden" name="full_name" value="${[u.first_name,u.last_name].filter(Boolean).join(' ')}">
+        <input type="hidden" name="email" value="${u.email}">
+        <input type="hidden" name="mobile" value="${u.mobile||''}">
+        <input type="hidden" name="whatsapp" value="${u.whatsapp||''}">
+        <input type="hidden" name="company" value="${u.company||''}">`;
+      return;
+    }
+
+    box.innerHTML = `
+      <div class="who-guest">
+        <a class="btn btn-line btn-sm" href="login.html?next=checkout.html">${t('checkout.signIn')}</a>
+        <span class="who-or">${t('checkout.or')}</span>
+        <span class="sm muted">${t('checkout.asGuest')}</span>
+      </div>
+      <div class="f-row">
+        <div class="field"><label for="full_name">${t('form.fullName')}</label>
+          <input id="full_name" name="full_name" autocomplete="name" required></div>
+        <div class="field"><label for="email">${t('form.email')}</label>
+          <input id="email" name="email" type="email" autocomplete="email" required></div>
+      </div>
+      <div class="f-row">
+        <div class="field"><label for="mobile">${t('form.mobile')}</label>
+          <input id="mobile" name="mobile" type="tel" required></div>
+        <div class="field"><label for="whatsapp">${t('form.whatsapp')} <span class="opt">${t('form.optional')}</span></label>
+          <input id="whatsapp" name="whatsapp" type="tel"></div>
+      </div>
+      <label class="who-save">
+        <input type="checkbox" name="create_account" value="1">
+        <span>${t('checkout.saveDetails')}</span>
+      </label>`;
+    if(typeof ortPhoneInit === 'function') ortPhoneInit(box);
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{ render(); fillCountries(); renderWho(); });
+  document.addEventListener('ort:lang', ()=>{ render(); fillCountries(); renderWho(); });
+})();
+</script>
+<script>
+/* Confirmation dialog. Announced to screen readers, dismissable by
+   Escape or the button, and it states the reply time rather than
+   just saying "thank you". */
+function showSubmitted(reference){
+  const old = document.getElementById('submitted');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.id = 'submitted';
+  el.className = 'sent-scrim';
+  el.innerHTML = `
+    <div class="sent-box" role="alertdialog" aria-modal="true" aria-labelledby="sent-h">
+      <div class="sent-tick" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M14 24.5l7 7 13-15" stroke="currentColor" stroke-width="3.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 id="sent-h">${t('sent.title')}</h2>
+      <p>${t('sent.body')}</p>
+      ${reference ? `<p class="sent-ref">${t('sent.ref')} <strong>${reference}</strong></p>` : ''}
+      <div class="sent-next">
+        <strong>${t('sent.nextTitle')}</strong>
+        <ol>
+          <li>${t('sent.n1')}</li>
+          <li>${t('sent.n2')}</li>
+          <li>${t('sent.n3')}</li>
+        </ol>
+      </div>
+      <div class="sent-acts">
+        <a class="btn btn-signal" href="dashboard.html">${t('sent.viewOrder')} <span class="arw">&rarr;</span></a>
+        <a class="btn btn-line" href="equipment.html">${t('cart.continue')}</a>
+      </div>
+      <button class="sent-x" aria-label="${t('common.close')}" data-sent-close>&times;</button>
+    </div>`;
+  document.body.appendChild(el);
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(()=> el.classList.add('in'));
+  const shut = ()=>{ el.classList.remove('in'); document.body.style.overflow='';
+                     setTimeout(()=>el.remove(), 300); };
+  el.addEventListener('click', e => { if (e.target === el || e.target.closest('[data-sent-close]')) shut(); });
+  document.addEventListener('keydown', function esc(e){
+    if (e.key === 'Escape'){ shut(); document.removeEventListener('keydown', esc); }
+  });
+  el.querySelector('.btn')?.focus();
+}
+</script>
+</body>
+</html>

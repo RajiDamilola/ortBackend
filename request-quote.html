@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Request a Quote — ORT WATT</title>
+<meta name="description" content="Request a firm quotation for solar equipment.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+
+</head>
+<body data-page-title="footer.quote" data-page-desc="price.sub">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main id="main">
+
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="err.home"></a> <span>/</span> <span data-t="footer.quote"></span></nav>
+      <h1 data-t="footer.quote"></h1>
+      <p class="lede" data-t="price.sub"></p>
+    </div>
+  </section>
+  <section class="sec wrap">
+    <div class="split r top">
+      <div class="rv d1" style="border:1px solid var(--hair);padding:clamp(1.5rem,3vw,2.5rem)">
+        <div id="pnote" hidden style="border:1px solid var(--signal);padding:.9rem 1rem;margin-block-end:1.35rem;font-size:var(--t-sm)"></div>
+        <form class="form" id="quote-form" novalidate>
+          <div class="msg err" hidden></div><div class="msg ok" hidden></div>
+          <div class="f2">
+  <div class="fld">
+    <label for="full_name"><span data-t="form.fullName"></span></label>
+    <input id="full_name" name="full_name" type="text" required data-t-ph="form.namePh">
+    <div class="err-msg"></div>
+  </div>
+  <div class="fld">
+    <label for="email"><span data-t="form.email"></span></label>
+    <input id="email" name="email" type="email" required data-t-ph="form.emailPh">
+    <div class="err-msg"></div>
+  </div></div>
+          <div class="f2">
+  <div class="fld">
+    <label for="country"><span data-t="form.country"></span></label>
+    <input id="country" name="country" type="text" required>
+    <div class="err-msg"></div>
+  </div>
+  <div class="fld">
+    <label for="city"><span data-t="form.city"></span></label>
+    <input id="city" name="city" type="text">
+    <div class="err-msg"></div>
+  </div></div>
+          
+  <div class="fld">
+    <label for="mobile"><span data-t="form.mobile"></span> <span class="opt">(<span data-t="form.optional"></span>)</span></label>
+    <input id="mobile" name="mobile" type="tel">
+    <div class="err-msg"></div>
+  </div>
+          
+  <div class="fld">
+    <label for="message" data-t="form.message"></label>
+    <textarea id="message" name="message" required data-t-ph="form.askPh"></textarea>
+    <div class="err-msg"></div>
+  </div>
+          <button class="btn btn-signal" type="submit"><span data-t="form.submit"></span> <span class="arw">→</span></button>
+        </form>
+      </div>
+      <aside class="rv">
+        <div class="idx"><b>01</b> <span data-t="price.title"></span></div>
+        <p class="lede" style="margin-block-start:1.5rem" data-t="price.sub"></p>
+        <a class="lnk lnk-signal" style="margin-block-start:1.25rem" href="transparent-pricing.html"><span data-t="home.priceCta"></span> <span class="arw">→</span></a>
+      </aside>
+    </div>
+  </section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>ortWireForm('quote-form','quote');
+    function pn(){const sp=new URLSearchParams(location.search).get('p');
+      if(!sp)return;const pr=ORT_PRODUCTS.find(x=>x.slug===sp);if(!pr)return;
+      const n=document.getElementById('pnote');
+      n.innerHTML='<strong class="ltr">'+pr.brand+' '+pr.model+'</strong> · '+tMoney(ortPrice(pr).total);
+      n.hidden=false;const m=document.getElementById('message');if(m&&!m.value)m.value=pr.brand+' '+pr.model+' — ';}
+    document.addEventListener('DOMContentLoaded',pn);document.addEventListener('ort:lang',pn);</script>
+</body>
+</html>

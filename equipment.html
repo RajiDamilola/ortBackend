@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Equipment — ORT WATT</title>
+<meta name="description" content="Equipment selected by ORT engineers. A deliberately short catalogue, with a quality score and reasoning attached to every product.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  /* Category chooser: the first thing a visitor sees, because
+     "what am I looking for" comes before "filter by voltage". */
+  .catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);}
+  @media(max-width:900px){.catgrid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:520px){.catgrid{grid-template-columns:1fr;}}
+  .catcell{
+    background:var(--navy-950);padding:1.5rem;text-align:start;
+    display:flex;flex-direction:column;justify-content:space-between;gap:1.5rem;min-block-size:8.5rem;
+    transition:background .25s var(--ease);position:relative;
+  }
+  .catcell:hover,.catcell.on{background:var(--navy-800);}
+  .catcell.on::before{content:'';position:absolute;inset-block-start:0;inset-inline-start:0;inline-size:2.5rem;block-size:2px;background:var(--signal);}
+  .catcell h3{font-size:1.1rem;}
+  .catcell p{font-size:var(--t-xs);color:var(--on-dark-3);margin-block-start:.35rem;}
+  .catcell .n{font-family:var(--f-m);font-size:var(--t-mono);color:var(--on-dark-3);align-self:flex-end;}
+  .catcell.on .n{color:var(--signal);}
+
+  .toolbar{
+    position:sticky;inset-block-start:4.75rem;z-index:50;background:rgba(5,10,22,.92);
+    backdrop-filter:blur(14px);border-block:1px solid var(--hair);
+  }
+  .toolbar-in{
+    max-inline-size:var(--max);margin-inline:auto;padding:.9rem var(--gut);
+    display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  }
+  .srch{position:relative;flex:1;min-inline-size:14rem;max-inline-size:24rem;}
+  .srch svg{position:absolute;inset-inline-start:.85rem;inset-block-start:50%;transform:translateY(-50%);inline-size:1rem;block-size:1rem;color:var(--on-dark-3);}
+  .srch input{inline-size:100%;padding:.7rem 1rem;padding-inline-start:2.6rem;background:var(--navy-900);border:1px solid var(--hair);color:var(--on-dark);}
+  .srch input:focus{outline:none;border-color:var(--signal);}
+  .toolbar select{padding:.7rem .9rem;background:var(--navy-900);border:1px solid var(--hair);color:var(--on-dark);font-size:var(--t-sm);}
+  .chips{display:flex;gap:.4rem;flex-wrap:wrap;}
+  .chip{padding:.5rem .85rem;font-family:var(--f-m);font-size:var(--t-xs);border:1px solid var(--hair);color:var(--on-dark-2);transition:.18s;letter-spacing:.05em;}
+  .chip:hover{border-color:var(--on-dark);color:var(--on-dark);}
+  .chip.on{background:var(--signal);border-color:var(--signal);color:var(--ink);}
+</style>
+</head>
+<body data-page-title="nav.equipment" data-page-desc="eq.sub">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+
+<main id="main">
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="err.home"></a> <span>/</span> <span data-t="nav.equipment"></span></nav>
+      <h1 data-t="eq.title"></h1>
+      <p class="lede" data-t="eq.sub"></p>
+    </div>
+  </section>
+
+  <!-- Step 1: what are you looking for -->
+  <section class="wrap" style="padding-block-end:clamp(2rem,4vw,3rem)">
+    <div class="idx rv" style="margin-block-end:1.5rem"><b>01</b> <span data-t="eq.lookingFor"></span></div>
+    <div class="catgrid rv" id="catgrid"></div>
+  </section>
+
+  <!-- Step 2: refine -->
+  <div class="toolbar">
+    <div class="toolbar-in">
+      <label class="srch">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.6"/></svg>
+        <input id="q" type="search" data-t-ph="eq.search" data-t-aria="a11y.search">
+      </label>
+      <div class="chips" id="labelchips"></div>
+      <div class="row" style="gap:.75rem">
+        <span class="mono xs dim" id="count"></span>
+        <select id="sort" data-t-aria="eq.sort"></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <section class="wrap sec" style="padding-block-start:2.5rem">
+    <div class="grid-p" id="grid"></div>
+    <div id="empty" hidden class="empty">
+      <h3 data-t="eq.emptyTitle"></h3>
+      <p data-t="eq.emptyBody"></p>
+      <div class="row" style="justify-content:center">
+        <a href="help-me-choose.html" class="btn btn-signal" data-open-chooser><span data-t="nav.helpCta"></span> <span class="arw">→</span></a>
+        <a class="btn btn-line" href="ask-an-engineer.html" data-t="eq.emptyCta"></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="slot-footer"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const state = { cat: params.get('c') || 'all', label:'all', q:'', sort:'score' };
+
+  function counts(slug){
+    return slug==='all' ? ORT_PRODUCTS.length : ORT_PRODUCTS.filter(p=>p.category===slug).length;
+  }
+
+  function renderCategories(){
+    const cats = [{slug:'all',key:'all'}, ...ORT_CATEGORIES];
+    document.getElementById('catgrid').innerHTML = cats.map(c=>{
+      const label = c.slug==='all' ? t('eq.all') : t('cat.'+c.key);
+      const sub   = c.slug==='all' ? t('eq.allSub') : t('cat.'+c.key+'Sub');
+      return `<button class="catcell${state.cat===c.slug?' on':''}" data-cat="${c.slug}">
+        <div><h3>${label}</h3><p>${sub}</p></div>
+        <span class="n">${tNum(counts(c.slug))}</span>
+      </button>`;
+    }).join('');
+    document.querySelectorAll('[data-cat]').forEach(b=>
+      b.addEventListener('click', ()=>{ state.cat=b.dataset.cat; renderCategories(); renderGrid(); }));
+  }
+
+  function renderControls(){
+    const labels = ['all','approved','premium','verified','selected'];
+    document.getElementById('labelchips').innerHTML = labels.map(l=>
+      `<button class="chip${state.label===l?' on':''}" data-label="${l}">${l==='all'?t('eq.anyLabel'):t('label.'+l)}</button>`).join('');
+    document.querySelectorAll('[data-label]').forEach(b=>
+      b.addEventListener('click', ()=>{ state.label=b.dataset.label; renderControls(); renderGrid(); }));
+
+    const sorts = [['score','eq.sortScore'],['price-asc','eq.sortPriceLow'],['price-desc','eq.sortPriceHigh'],['brand','eq.sortBrand']];
+    const sel = document.getElementById('sort');
+    sel.innerHTML = sorts.map(([v,k])=>`<option value="${v}"${state.sort===v?' selected':''}>${t(k)}</option>`).join('');
+    sel.onchange = e=>{ state.sort=e.target.value; renderGrid(); };
+  }
+
+  function renderGrid(){
+    let list = ORT_PRODUCTS.filter(p=>{
+      if(state.cat!=='all' && p.category!==state.cat) return false;
+      if(state.label!=='all' && p.label!==state.label) return false;
+      if(state.q){
+        const tx = pText(p);
+        const hay = `${p.brand} ${p.model} ${p.capacity} ${tx.catLabel}`.toLowerCase();
+        if(!hay.includes(state.q.toLowerCase())) return false;
+      }
+      return true;
+    });
+    const sorters = {
+      'score':(a,b)=>b.score-a.score,
+      'price-asc':(a,b)=>ortPrice(a).total-ortPrice(b).total,
+      'price-desc':(a,b)=>ortPrice(b).total-ortPrice(a).total,
+      'brand':(a,b)=>a.brand.localeCompare(b.brand),
+    };
+    list.sort(sorters[state.sort]);
+
+    const grid = document.getElementById('grid');
+    grid.innerHTML = list.map(ortTile).join('');
+    grid.hidden = !list.length;
+    document.getElementById('empty').hidden = !!list.length;
+    document.getElementById('count').textContent =
+      list.length===1 ? t('eq.resultsOne',{n:tNum(1)}) : t('eq.resultsMany',{n:tNum(list.length)});
+    ortReveal();
+  }
+
+  function renderAll(){ renderCategories(); renderControls(); renderGrid(); }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    renderAll();
+    document.getElementById('q').addEventListener('input', e=>{ state.q=e.target.value; renderGrid(); });
+  });
+  document.addEventListener('ort:lang', renderAll);
+})();
+</script>
+</body>
+</html>

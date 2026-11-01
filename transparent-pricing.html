@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transparent Pricing — ORT WATT</title>
+<meta name="description" content="Supplier reference price plus a flat 10% quality and service fee, always shown separately.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+
+</head>
+<body data-page-title="price.title" data-page-desc="price.sub">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main id="main">
+
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="err.home"></a> <span>/</span> <span data-t="nav.why"></span></nav>
+      <h1 data-t="price.title"></h1>
+      <p class="lede" data-t="price.sub"></p>
+    </div>
+  </section>
+  <section class="sec" style="background:var(--navy-900)">
+    <div class="wrap">
+      <div class="eq rv">
+        <div class="eq-line">
+          <div class="eq-card">
+            <div>
+              <div class="eq-k" data-t="price.ref"></div>
+              <div class="eq-note" data-t="price.refNote"></div>
+            </div>
+            <div class="eq-amt" id="e1"></div>
+          </div>
+        </div>
+
+        <div class="eq-join"><i></i><span class="eq-op">+</span><span id="eq-fee"></span></div>
+
+        <div class="eq-line fee">
+          <div class="eq-card">
+            <div>
+              <div class="eq-k" data-t="price.fee"></div>
+              <div class="eq-note" data-t="price.feeNote"></div>
+            </div>
+            <div class="eq-amt" id="e2"></div>
+          </div>
+        </div>
+
+        <div class="eq-join"><i></i><span class="eq-op">=</span><span data-t="price.totalNote"></span></div>
+
+        <div class="eq-line total">
+          <div class="eq-card">
+            <div>
+              <div class="eq-k" data-t="price.total"></div>
+              <div class="eq-note" data-t="price.currencyNote"></div>
+            </div>
+            <div class="eq-amt" id="e3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec wrap">
+    <div class="split l top">
+      <div class="rv">
+        <div class="idx"><b>01</b> <span data-t="price.covers"></span></div>
+        <p class="lede" style="margin-block-start:1.5rem" data-t="price.honest"></p>
+      </div>
+      <ul class="checks rv d1">
+        <li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c1"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c2"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c3"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c4"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c5"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c6"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c7"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c8"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c9"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c10"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="price.c11"></span></li>
+      </ul>
+      <a class="lnk" style="margin-block-start:1.5rem" href="about.html#price-story"><span data-t="about.priceTitle"></span> <span class="arw">→</span></a>
+    </div>
+  </section>
+
+  <section class="sec light">
+    <div class="wrap">
+      <div class="rv" style="max-inline-size:42rem;margin-block-end:2rem">
+        <div class="idx"><b>02</b> <span data-t="price.whyChanges"></span></div>
+      </div>
+      <div class="ledger rv">
+        <div class="led" style="grid-template-columns:4.5rem 12rem 1fr"><span class="led-n">01</span><h3 style="font-size:1rem" data-t="price.f1"></h3><p data-t="price.f1d"></p></div><div class="led" style="grid-template-columns:4.5rem 12rem 1fr"><span class="led-n">02</span><h3 style="font-size:1rem" data-t="price.f2"></h3><p data-t="price.f2d"></p></div><div class="led" style="grid-template-columns:4.5rem 12rem 1fr"><span class="led-n">03</span><h3 style="font-size:1rem" data-t="price.f3"></h3><p data-t="price.f3d"></p></div><div class="led" style="grid-template-columns:4.5rem 12rem 1fr"><span class="led-n">04</span><h3 style="font-size:1rem" data-t="price.f4"></h3><p data-t="price.f4d"></p></div><div class="led" style="grid-template-columns:4.5rem 12rem 1fr"><span class="led-n">05</span><h3 style="font-size:1rem" data-t="price.f5"></h3><p data-t="price.f5d"></p></div>
+      </div>
+      <p class="sm dim rv" style="margin-block-start:1.5rem" data-t="price.currencyNote"></p>
+    </div>
+  </section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>function r(){document.getElementById('e1').textContent=tMoney(500);
+    document.getElementById('e2').textContent=tMoney(50);document.querySelectorAll('.eq-join span:not(.eq-op)')[0]&&(document.querySelectorAll('.eq-join span:not(.eq-op)')[0].textContent=tNum(10)+'%');
+    document.getElementById('e3').textContent=tMoney(550);ortReveal();}
+  document.addEventListener('DOMContentLoaded',r);document.addEventListener('ort:lang',r);</script>
+</body>
+</html>

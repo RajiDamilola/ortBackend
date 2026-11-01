@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compare — ORT WATT</title>
+<meta name="description" content="Compare selected solar equipment side by side: quality score, specifications, warranty and transparent pricing.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  /* The picker is a row of toggles, not a dropdown: seeing all
+     candidates at once is the point of a comparison tool. */
+  .pickrow{display:flex;gap:.5rem;flex-wrap:wrap;}
+  .pick{
+    display:flex;align-items:center;gap:.6rem;padding:.6rem .85rem;
+    border:1px solid var(--hair);background:transparent;color:var(--ink-2);
+    font-size:var(--t-sm);text-align:start;transition:border-color .18s,color .18s,background .18s;
+  }
+  .pick:hover{border-color:var(--ink);color:var(--ink);}
+  .pick.on{border-color:var(--signal);color:var(--ink);background:rgba(226,34,43,.06);}
+  .pick .box{
+    width:1rem;height:1rem;border:1px solid currentColor;flex:none;
+    display:grid;place-items:center;
+  }
+  .pick .box svg{width:.7rem;height:.7rem;opacity:0;transition:opacity .15s;}
+  .pick.on .box{background:var(--signal);border-color:var(--signal);color:#fff;}
+  .pick.on .box svg{opacity:1;}
+
+  /* Comparison grid. Column widths are equal so the eye can scan
+     down a row without re-anchoring. */
+  .cmp{width:100%;border-collapse:collapse;}
+  .cmp th,.cmp td{
+    padding:1rem .9rem;border-bottom:1px solid var(--hair);
+    vertical-align:top;text-align:start;font-size:var(--t-sm);
+  }
+  .cmp thead th{border-bottom:1px solid var(--ink);vertical-align:bottom;}
+  .cmp .rowlab{
+    font-family:var(--f-m);font-size:var(--t-xs);letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-3);width:11rem;font-weight:400;
+  }
+  .cmp tbody tr:hover{background:rgba(255,255,255,.02);}
+  .cmp .num{font-family:var(--f-m);}
+  /* The winning cell in a scored row gets a quiet mark rather than
+     a loud colour — this is an assessment, not a leaderboard. */
+  .best{position:relative;color:var(--ink);}
+  .best::after{
+    content:attr(data-best);position:absolute;inset-inline-start:.9rem;bottom:.15rem;
+    font-family:var(--f-m);font-size:.5625rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--signal);
+  }
+  .best{padding-bottom:1.6rem;}
+  .cmphead-fig{
+    aspect-ratio:3/2;background:var(--navy-900);border:1px solid var(--hair);
+    display:grid;place-items:center;color:var(--on-dark-3);margin-bottom:.85rem;
+  }
+  .cmphead-fig svg{width:60%;height:60%;}
+  .cmp-scroll{overflow-x:auto;}
+  @media(max-width:760px){ .cmp .rowlab{width:7.5rem;} .cmp th,.cmp td{padding:.8rem .6rem;} }
+</style>
+</head>
+<body>
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+
+<main>
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs">
+        <a href="equipment.html" data-t="nav.equipment"></a> <span>/</span>
+        <span data-t="eq.compare"></span>
+      </nav>
+      <h1 data-t="cmp.title"></h1>
+      <p class="lede" data-t="cmp.sub"></p>
+    </div>
+  </section>
+
+  <section class="sec wrap">
+    <div class="rv" style="margin-bottom:2rem">
+      <div class="index"><span class="n">01</span> <span data-t="cmp.pick"></span></div>
+      <div class="pickrow" id="picker" style="margin-top:1.25rem"></div>
+      <p class="small muted" id="hint" style="margin-top:.85rem"></p>
+    </div>
+
+    <div class="cmp-scroll rv">
+      <table class="cmp" id="table"></table>
+    </div>
+  </section>
+
+  <section class="sec wrap" style="padding-top:0">
+    <div class="rv" style="border-top:1px solid var(--hair);padding-top:2.5rem;display:flex;
+                justify-content:space-between;gap:2rem;flex-wrap:wrap;align-items:end">
+      <div style="max-width:34rem">
+        <h2 class="t-h3" data-t="cmp.unsure"></h2>
+        <p class="muted" style="margin-top:.65rem" data-t="cmp.unsureBody"></p>
+      </div>
+      <a class="btn btn-signal" href="ask-an-engineer.html">
+        <span data-t="nav.ask"></span> <span class="arw">→</span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<div id="slot-footer"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>
+(function(){
+  // Preselect from ?p=a,b or fall back to the three highest scored.
+  const fromUrl = (new URLSearchParams(location.search).get('p') || '')
+    .split(',').map(s=>s.trim()).filter(Boolean);
+  let picked = fromUrl.filter(s => ORT_PRODUCTS.some(p=>p.slug===s)).slice(0,3);
+  if(!picked.length){
+    picked = [...ORT_PRODUCTS].sort((a,b)=>b.score-a.score).slice(0,3).map(p=>p.slug);
+  }
+
+  const TICK = '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2.4"/></svg>';
+
+  function renderPicker(){
+    document.getElementById('picker').innerHTML = ORT_PRODUCTS.map(p=>
+      `<button class="pick${picked.includes(p.slug)?' on':''}" data-s="${p.slug}"
+        aria-pressed="${picked.includes(p.slug)}">
+        <span class="box">${TICK}</span>
+        <span><span class="ltr">${p.brand} ${p.model}</span></span>
+      </button>`).join('');
+    document.getElementById('hint').textContent = t('cmp.hint');
+  }
+
+  function renderTable(){
+    const sel = picked.map(s=>ORT_PRODUCTS.find(p=>p.slug===s)).filter(Boolean);
+    const table = document.getElementById('table');
+    if(!sel.length){
+      table.innerHTML = `<tbody><tr><td class="muted">${t('cmp.empty')}</td></tr></tbody>`;
+      return;
+    }
+
+    // Numeric rows can have a "best" cell; text rows cannot.
+    const numRows = [
+      ['cmp.rowScore',       p=>p.score,             v=>tScore(v)],
+      ['cmp.rowReliability', p=>p.scores.reliability,v=>tScore(v)],
+      ['cmp.rowValue',       p=>p.scores.value,      v=>tScore(v)],
+      ['cmp.rowPerformance', p=>p.scores.performance,v=>tScore(v)],
+      ['cmp.rowWarranty',    p=>p.scores.warranty,   v=>tScore(v)],
+      ['cmp.rowParts',       p=>p.scores.parts,      v=>tScore(v)],
+    ];
+
+    const head = `<thead><tr><th></th>${sel.map(p=>`
+      <th>
+        <div class="cmphead-fig">${FIG[p.figure]||FIG.panel}</div>
+        <div class="mono" style="font-size:var(--t-xs);letter-spacing:.12em;
+             text-transform:uppercase;color:var(--ink-3)">${p.brand}</div>
+        <div style="font-family:var(--f-d);font-size:1.0625rem;margin-top:.25rem"
+             class="ltr">${p.model}</div>
+      </th>`).join('')}</tr></thead>`;
+
+    const txtRow = (key, fn) =>
+      `<tr><td class="rowlab">${t(key)}</td>${sel.map(p=>`<td>${fn(p)}</td>`).join('')}</tr>`;
+
+    const numRow = ([key, get, fmt]) => {
+      const vals = sel.map(get);
+      const max = Math.max(...vals);
+      // Only mark a winner if there is an actual difference.
+      const unique = new Set(vals).size > 1;
+      return `<tr><td class="rowlab">${t(key)}</td>${sel.map((p,i)=>{
+        const win = unique && vals[i]===max;
+        return `<td class="num${win?' best':''}"${win?` data-best="${t('cmp.best')}"`:''}>${fmt(vals[i])}</td>`;
+      }).join('')}</tr>`;
+    };
+
+    const body = `<tbody>
+      ${txtRow('cmp.rowCategory',    p=>pText(p).catLabel)}
+      ${txtRow('cmp.rowCapacity',    p=>`<span class="ltr">${p.capacity}</span>`)}
+      ${txtRow('cmp.rowLabel',       p=>`<span class="badge b-${p.label}">${t('label.'+p.label)}</span>`)}
+      ${numRows.map(numRow).join('')}
+      ${txtRow('cmp.rowRef',         p=>tMoney(ortPrice(p).ref))}
+      ${txtRow('cmp.rowFee',         p=>`${tNum(p.feePercent)}% · ${tMoney(ortPrice(p).fee)}`)}
+      ${(()=>{ // final price: lowest is "best"
+        const vals = sel.map(p=>ortPrice(p).total);
+        const min = Math.min(...vals);
+        const unique = new Set(vals).size > 1;
+        return `<tr><td class="rowlab">${t('cmp.rowTotal')}</td>${sel.map((p,i)=>{
+          const win = unique && vals[i]===min;
+          return `<td class="num${win?' best':''}"${win?` data-best="${t('cmp.best')}"`:''}
+            style="font-family:var(--f-d);font-size:1.15rem">${tMoney(vals[i])}</td>`;
+        }).join('')}</tr>`;
+      })()}
+      ${txtRow('cmp.rowAvailability', p=>t('eq.'+p.availability))}
+      ${txtRow('cmp.rowGoodFor',      p=>pText(p).goodFor.slice(0,3).map(g=>`· ${g}`).join('<br>'))}
+      ${txtRow('cmp.rowWhy',          p=>pText(p).why.slice(0,2).map(w=>`· ${w}`).join('<br>'))}
+      <tr><td></td>${sel.map(p=>`<td>
+        <a class="btn btn-line btn-sm" href="product.html?p=${p.slug}">
+          <span>${t('eq.view')}</span> <span class="arw">→</span></a></td>`).join('')}</tr>
+    </tbody>`;
+
+    table.innerHTML = head + body;
+  }
+
+  function renderAll(){ renderPicker(); renderTable(); ortReveal(); }
+
+  document.getElementById('picker').addEventListener('click', e=>{
+    const b = e.target.closest('[data-s]'); if(!b) return;
+    const s = b.dataset.s;
+    if(picked.includes(s)) picked = picked.filter(x=>x!==s);
+    else if(picked.length < 3) picked.push(s);
+    else { document.getElementById('hint').textContent = t('cmp.maxed'); return; }
+    // Keep the URL shareable.
+    const u = new URL(location); u.searchParams.set('p', picked.join(','));
+    history.replaceState({}, '', u);
+    renderAll();
+  });
+
+  document.addEventListener('DOMContentLoaded', renderAll);
+  document.addEventListener('ort:lang', renderAll);
+})();
+</script>
+</body>
+</html>

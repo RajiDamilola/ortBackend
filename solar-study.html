@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Solar Study — ORT WATT</title>
+<meta name="description" content="Request a complete solar project study from the ORT engineering team.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+<style>.wiz-steps{display:flex;gap:.4rem;margin-block-end:2rem;}
+    .wiz-steps i{block-size:2px;flex:1;background:var(--hair);transition:background .3s;}
+    .wiz-steps i.on{background:var(--signal);}
+    .wiz-pane[hidden]{display:none;}</style>
+</head>
+<body data-page-title="study.title" data-page-desc="study.sub">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main id="main">
+
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="err.home"></a> <span>/</span> <span data-t="nav.engineering"></span></nav>
+      <h1 data-t="study.title"></h1>
+      <p class="lede" data-t="study.sub"></p>
+    </div>
+  </section>
+  <section class="sec wrap">
+    <div class="split r top">
+      <div class="rv d1" style="border:1px solid var(--hair);padding:clamp(1.5rem,3vw,2.5rem)">
+        <div class="mono xs dim" id="wiz-label" style="margin-block-end:.75rem"></div>
+        <div class="wiz-steps"><i data-step="0"></i><i data-step="1"></i><i data-step="2"></i><i data-step="3"></i><i data-step="4"></i></div>
+        <form class="form" id="study-form" novalidate>
+          <div class="msg err" hidden></div><div class="msg ok" hidden></div>
+          <div class="wiz-pane" data-pane="0">
+            <h3 class="t-h3" style="margin-block-end:1.25rem" data-t="study.s1q"></h3>
+            <div class="fld"><label for="property_type" data-t="study.propertyType"></label>
+              <select id="property_type" name="property_type"></select></div>
+            <div class="fld" style="margin-block-start:1.35rem"><label for="existing" data-t="study.existing"></label>
+              <select id="existing" name="existing"></select></div>
+            <div class="f2" style="margin-block-start:1.35rem">
+  <div class="fld">
+    <label for="country"><span data-t="form.country"></span></label>
+    <input id="country" name="country" type="text" required>
+    <div class="err-msg"></div>
+  </div>
+  <div class="fld">
+    <label for="city"><span data-t="form.city"></span></label>
+    <input id="city" name="city" type="text" required>
+    <div class="err-msg"></div>
+  </div></div>
+          </div>
+          <div class="wiz-pane" data-pane="1" hidden>
+            <h3 class="t-h3" style="margin-block-end:1.25rem" data-t="study.s2q"></h3>
+            
+  <div class="fld">
+    <label for="message" data-t="form.askLabel"></label>
+    <textarea id="message" name="message" data-t-ph="study.appliancesPh"></textarea>
+    <div class="err-msg"></div>
+  </div>
+          </div>
+          <div class="wiz-pane" data-pane="2" hidden>
+            <h3 class="t-h3" style="margin-block-end:1.25rem" data-t="study.s3q"></h3>
+            
+  <div class="fld">
+    <label for="backup" data-t="study.s3"></label>
+    <textarea id="backup" name="backup" data-t-ph="study.backupPh"></textarea>
+    <div class="err-msg"></div>
+  </div>
+          </div>
+          <div class="wiz-pane" data-pane="3" hidden>
+            <h3 class="t-h3" style="margin-block-end:1.25rem" data-t="study.s4q"></h3>
+            
+  <div class="fld">
+    <label for="files"><span data-t="form.files"></span> <span class="opt">(<span data-t="form.optional"></span>)</span></label>
+    <input id="files" name="files" type="file" multiple accept="image/*,.pdf">
+    <div class="hint" data-t="study.filesHint"></div>
+  </div>
+          </div>
+          <div class="wiz-pane" data-pane="4" hidden>
+            <h3 class="t-h3" style="margin-block-end:1.25rem" data-t="study.s5q"></h3>
+            <div class="f2">
+  <div class="fld">
+    <label for="full_name"><span data-t="form.fullName"></span></label>
+    <input id="full_name" name="full_name" type="text" required data-t-ph="form.namePh">
+    <div class="err-msg"></div>
+  </div>
+  <div class="fld">
+    <label for="email"><span data-t="form.email"></span></label>
+    <input id="email" name="email" type="email" required data-t-ph="form.emailPh">
+    <div class="err-msg"></div>
+  </div></div>
+            
+  <div class="fld">
+    <label for="mobile"><span data-t="form.mobile"></span> <span class="opt">(<span data-t="form.optional"></span>)</span></label>
+    <input id="mobile" name="mobile" type="tel">
+    <div class="err-msg"></div>
+  </div>
+          </div>
+          <div class="row" style="justify-content:space-between;margin-block-start:1.5rem">
+            <button class="btn btn-line" type="button" id="wiz-back" hidden><span data-t="chooser.back"></span></button>
+            <button class="btn btn-signal" type="button" id="wiz-next"><span data-t="chooser.next"></span> <span class="arw">→</span></button>
+            <button class="btn btn-signal" type="submit" id="wiz-send" hidden><span data-t="form.submit"></span> <span class="arw">→</span></button>
+          </div>
+        </form>
+      </div>
+      <aside class="rv">
+        <div class="idx"><b>01</b> <span data-t="study.includes"></span></div>
+        <ul class="checks one" style="margin-block-start:1.5rem"><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="study.i1"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="study.i2"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="study.i3"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="study.i4"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="study.i5"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="study.i6"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="study.i7"></span></li></ul>
+      </aside>
+    </div>
+  </section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  (function(){
+    let step=0; const TOTAL=5;
+    const panes=[...document.querySelectorAll('.wiz-pane')];
+    function fillSelects(){
+      const pt=document.getElementById('property_type');
+      pt.innerHTML=['house','apartment','office','shop','warehouse','factory','farm','other']
+        .map(k=>'<option>'+t('study.'+k)+'</option>').join('');
+      const ex=document.getElementById('existing');
+      ex.innerHTML=['exNone','exPanels','exExtend','exReplace']
+        .map(k=>'<option>'+t('study.'+k)+'</option>').join('');
+    }
+    function show(){
+      panes.forEach((p,i)=>p.hidden=i!==step);
+      document.querySelectorAll('.wiz-steps i').forEach((el,i)=>el.classList.toggle('on',i<=step));
+      document.getElementById('wiz-label').textContent=t('study.progress',{n:step+1,total:TOTAL});
+      document.getElementById('wiz-back').hidden=step===0;
+      document.getElementById('wiz-next').hidden=step===TOTAL-1;
+      document.getElementById('wiz-send').hidden=step!==TOTAL-1;
+    }
+    document.getElementById('wiz-next').addEventListener('click',()=>{if(step<TOTAL-1){step++;show();}});
+    document.getElementById('wiz-back').addEventListener('click',()=>{if(step>0){step--;show();}});
+    function init(){fillSelects();show();}
+    document.addEventListener('DOMContentLoaded',init);
+    document.addEventListener('ort:lang',init);
+    ortWireForm('study-form','study');
+  })();</script>
+</body>
+</html>

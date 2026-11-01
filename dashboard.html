@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My account — ORT WATT</title>
+<meta name="description" content="Your requests, quotes and installations.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+<style>.dash{display:grid;grid-template-columns:15rem 1fr;gap:clamp(2rem,4vw,3.5rem);align-items:start;}
+    @media(max-width:860px){.dash{grid-template-columns:1fr;}}
+    .dnav a,.dnav button{display:block;inline-size:100%;text-align:start;padding:.7rem .25rem;border-block-end:1px solid var(--hair);font-size:var(--t-sm);color:var(--on-dark-2);}
+    .dnav a:hover{color:var(--on-dark);}
+    .rq{display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:center;padding-block:1.1rem;border-block-end:1px solid var(--hair);}
+    @media(max-width:640px){.rq{grid-template-columns:1fr auto;}}
+    .st{font-family:var(--f-m);font-size:var(--t-mono);letter-spacing:.1em;text-transform:uppercase;padding:.3rem .55rem;border:1px solid currentColor;}</style>
+</head>
+<body data-page-title="account.myAccount" data-page-desc="account.sub">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main id="main">
+
+  <section class="phead" style="padding-block:clamp(2rem,4vw,3rem)">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="err.home"></a> <span>/</span> <span data-t="account.myAccount"></span></nav>
+      <h1 id="hello" style="font-size:clamp(1.75rem,3vw,2.4rem);margin-block:1rem .5rem" data-t="account.myAccount"></h1>
+      <p class="lede" style="font-size:var(--t-body)" data-t="account.sub"></p>
+    </div>
+  </section>
+  <section class="sec wrap" style="padding-block:clamp(2.5rem,5vw,4rem)">
+    <div class="dash">
+      <aside class="dnav">
+        <div class="idx" style="margin-block-end:1rem"><b>01</b> <span data-t="account.myAccount"></span></div>
+        <a href="#req" data-t="account.requests"></a>
+        <a href="ask-an-engineer.html" data-t="nav.ask"></a>
+        <a href="request-quote.html" data-t="footer.quote"></a>
+        <a href="installation.html" data-t="nav.installation"></a>
+        <a href="contact.html" data-t="account.support"></a>
+        <button class="btn btn-line btn-sm" id="logout" style="margin-block-start:1.5rem;inline-size:100%"><span data-t="account.logout"></span></button>
+      </aside>
+      <div>
+        <div id="nologin" hidden class="empty">
+          <h3 data-t="account.notLoggedIn"></h3>
+          <p data-t="account.notLoggedInBody"></p>
+          <div class="row" style="justify-content:center">
+            <a class="btn btn-signal" href="login.html"><span data-t="nav.login"></span> <span class="arw">→</span></a>
+            <a class="btn btn-line" href="signup.html" data-t="nav.signup"></a>
+          </div>
+        </div>
+        <div id="dbody" hidden>
+          <div class="stats" style="padding-block-end:2rem;border-block-end:1px solid var(--hair)">
+            <div class="stat"><div class="v" id="s1">0</div><div class="k" data-t="account.total"></div></div>
+            <div class="stat"><div class="v" id="s2">0</div><div class="k" data-t="account.open"></div></div>
+            <div class="stat"><div class="v" id="s3">0</div><div class="k" data-t="account.quoted"></div></div>
+            <div class="stat"><div class="v" id="s4">0</div><div class="k" data-t="account.closed"></div></div>
+          </div>
+          <h2 class="t-h3" id="req" style="margin-block:2rem 1rem" data-t="account.requests"></h2>
+          <div id="rlist"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  let CACHE=null;
+  async function load(){
+    const nologin=document.getElementById('nologin'),dbody=document.getElementById('dbody');
+    if(!ortAuth.token){nologin.hidden=false;return;}
+    try{
+      const me=await ortApi.me();
+      document.getElementById('hello').textContent=t('account.welcome',{name:me.user.first_name});
+      const {requests}=await ortApi.myRequests();CACHE=requests;dbody.hidden=false;paint();
+    }catch(e){nologin.hidden=false;}
+  }
+  function paint(){
+    if(!CACHE)return;
+    const K={quote:'account.kindQuote',study:'account.kindStudy',ask_engineer:'account.kindAsk',installation:'account.kindInstall'};
+    const S={new:'account.stNew',in_review:'account.stReview',quoted:'account.stQuoted',answered:'account.stAnswered',closed:'account.stClosed'};
+    document.getElementById('s1').textContent=tNum(CACHE.length);
+    document.getElementById('s2').textContent=tNum(CACHE.filter(r=>['new','in_review'].includes(r.status)).length);
+    document.getElementById('s3').textContent=tNum(CACHE.filter(r=>r.status==='quoted').length);
+    document.getElementById('s4').textContent=tNum(CACHE.filter(r=>r.status==='closed').length);
+    const l=document.getElementById('rlist');
+    /* A quoted order is the one row the customer must act on, so it
+       shows the figures and a button rather than only a status word.
+       Every other row stays a quiet single line. */
+    const quoteBlock = r => '<div class="quote-box">' +
+      '<div class="quote-line"><span>'+t('cart.goodsTotal')+'</span><span class="num">'+tMoney(r.goods_total)+'</span></div>' +
+      '<div class="quote-line"><span>'+t('cart.delivery')+'</span><span class="num">'+tMoney(r.delivery_cost)+'</span></div>' +
+      '<div class="quote-line quote-tot"><span>'+t('cart.total')+'</span><span class="num">'+tMoney(r.quote_total)+'</span></div>' +
+      expiryLine(r) +
+      '<a class="btn btn-wa btn-sm" target="_blank" rel="noopener" href="'+quoteWaLink(r)+'">' +
+        t('account.confirmOnWa')+'</a></div>';
+
+    /* No payment on the site yet, so accepting a quote happens in
+       conversation. The reference is carried into the message so
+       staff can find the order immediately. */
+    const quoteWaLink = r => 'https://wa.me/'+ORT_WHATSAPP+'?text='+
+      encodeURIComponent(t('account.confirmWaMsg',{ref:r.reference||r.id}));
+
+    /* Counts down rather than only showing a date. "3 days left"
+       prompts action in a way that "expires 14 March" does not. */
+    const daysLeft = r => Math.ceil((new Date(r.quote_expires) - new Date()) / 86400000);
+    const expiryLine = r => {
+      if (!r.quote_expires) return '';
+      const d = daysLeft(r);
+      if (d < 0)  return '<p class="quote-exp quote-gone">'+t('account.quoteExpired')+'</p>';
+      if (d === 0) return '<p class="quote-exp quote-soon">'+t('account.quoteLastDay')+'</p>';
+      if (d === 1) return '<p class="quote-exp quote-soon">'+t('account.quoteDayLeft')+'</p>';
+      if (d <= 3) return '<p class="quote-exp quote-soon">'+t('account.quoteDaysLeft',{n:tNum(d)})+'</p>';
+      return '<p class="quote-exp">'+t('account.quoteValid',{date:tDate(r.quote_expires)})+'</p>';
+    };
+
+    /* An expired quote is shown, not hidden. A customer returning on
+       day 20 must be told the price lapsed, not shown a stale total
+       or a button that fails. */
+    const expiredBlock = r => '<div class="quote-box quote-box-gone">' +
+      '<p class="quote-exp quote-gone">'+t('account.quoteExpired')+'</p>' +
+      '<p class="sm muted">'+t('account.quoteExpiredBody')+'</p>' +
+      '<a class="btn btn-line btn-sm" href="ask-an-engineer.html?ref='+encodeURIComponent(r.reference||r.id)+'">' +
+        t('account.requote')+' <span class="arw">&rarr;</span></a></div>';
+
+    const row = r => {
+      const expired = r.status === 'expired' ||
+        (r.quote_expires && new Date(r.quote_expires) < new Date().setHours(0,0,0,0));
+      const quoted = r.status === 'quoted' && r.quote_total && !expired;
+      return '<div class="rq'+(quoted?' rq-quoted':'')+'">' +
+        '<span class="mono xs dim">'+tDate(r.created_at)+'</span>' +
+        '<div><strong>'+t(K[r.kind]||'account.kindAsk')+'</strong>' +
+          (r.reference ? ' <span class="mono xs dim">'+r.reference+'</span>' : '') +
+          '<div class="sm muted">'+((r.message||'').slice(0,80)||'\u2014')+'</div>' +
+          (quoted ? quoteBlock(r) : expired && r.quote_total ? expiredBlock(r) : '') +
+        '</div>' +
+        '<span class="st st-'+r.status+'">'+t(S[r.status]||'account.stNew')+'</span></div>';
+    };
+    l.innerHTML=CACHE.length?CACHE.map(row).join('')
+      :'<div class="empty"><h3>'+t('account.emptyTitle')+'</h3><p>'+t('account.emptyBody')+'</p><a class="btn btn-signal" href="ask-an-engineer.html">'+t('nav.ask')+' <span class="arw">→</span></a></div>';
+  }
+  document.addEventListener('DOMContentLoaded',()=>{load();
+    document.getElementById('logout').addEventListener('click',()=>{ortAuth.logout();location.href='index.html';});});
+  document.addEventListener('ort:lang',paint);</script>
+</body>
+</html>

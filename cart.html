@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cart — ORT WATT</title>
+<meta name="description" content="Review the equipment in your cart, adjust quantities and proceed to checkout.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main>
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="nav.home"></a> <span>/</span> <span data-t="cart.title"></span></nav>
+      <h1 data-t="cart.title"></h1>
+      <p class="lede" data-t="cart.sub"></p>
+    </div>
+  </section>
+
+  <section class="sec wrap">
+    <div id="cart-page"></div>
+  </section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>
+(function(){
+  function render(){
+    const T = cartTotals();
+    const box = document.getElementById('cart-page');
+    if(T.isEmpty){
+      box.innerHTML = `<div class="empty">
+        <h3>${t('cart.emptyTitle')}</h3>
+        <p>${t('cart.emptyBody')}</p>
+        <a class="btn btn-signal" href="equipment.html">${t('cart.browse')} <span class="arw">→</span></a>
+      </div>`;
+      return;
+    }
+    box.innerHTML = `
+      <div class="cart-layout">
+        <div>
+          <div class="index" style="margin-block-end:1.25rem"><span class="n">01</span> <span>${t('cart.lines')}</span></div>
+          <div class="cart-lines">${T.lines.map(line).join('')}</div>
+          <a class="link" href="equipment.html" style="margin-block-start:1.5rem;display:inline-flex">← ${t('cart.continue')}</a>
+        </div>
+        <aside class="cart-aside">
+          <div class="index" style="margin-block-end:1.25rem"><span class="n">02</span> <span>${t('cart.summary')}</span></div>
+          ${cartSummaryHTML(T)}
+          <!-- No online payment yet. The customer sends the list and
+               the conversation continues on WhatsApp or by email. -->
+          <div class="send-block">
+            <h3>${t('send.title')}</h3>
+            <p>${t('send.body')}</p>
+
+            <a class="btn btn-wa send-btn" data-send-wa href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.22 1.36.19 1.87.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35z"/><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.2-1.15l-.3-.18-3.1.81.83-3.02-.2-.31A8.2 8.2 0 1112 20.2z"/></svg>
+              <span><strong>${t('send.wa')}</strong><small>${t('send.waSub')}</small></span>
+            </a>
+
+            <a class="btn btn-line send-btn" data-send-mail href="#">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 6l9 6.5L21 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span><strong>${t('send.mail')}</strong><small>${t('send.mailSub')}</small></span>
+            </a>
+
+            <a class="lnk send-alt" href="checkout.html">${t('send.form')} <span class="arw">&rarr;</span></a>
+          </div>
+        </aside>
+      </div>`;
+  }
+
+  function line(l){
+    const p = l.product;
+    return `<div class="cart-line">
+      <a class="cart-fig" href="product.html?p=${p.slug}">${FIG[p.figure]}</a>
+      <div class="cart-info">
+        <div class="cart-brand">${p.brand}</div>
+        <a class="cart-name ltr" href="product.html?p=${p.slug}">${p.model}</a>
+        <span class="badge b-${p.label}" style="margin-block-start:.4rem">${t('label.'+p.label)}</span>
+        <div class="qty">
+          <button class="qty-b" data-qty-dec="${p.slug}" aria-label="${t('cart.decrease')}">−</button>
+          <input class="qty-i" type="number" min="1" max="99" value="${l.qty}" data-qty-set="${p.slug}" aria-label="${t('cart.qty')}">
+          <button class="qty-b" data-qty-inc="${p.slug}" aria-label="${t('cart.increase')}">+</button>
+          <button class="qty-x" data-qty-rm="${p.slug}">${t('cart.remove')}</button>
+        </div>
+      </div>
+      <div class="cart-money">
+        ${l.mode==='buy'
+          ? `<strong>${tMoney(l.lineTotal)}</strong><small>${tMoney(l.unitTotal)} ${t('cart.each')}</small>`
+          : `<em class="cart-quote">${t('cart.byQuote')}</em>`}
+      </div>
+    </div>`;
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{ render(); cartRefreshSendLinks(); });
+  document.addEventListener('ort:cart-view', ()=>{ render(); cartRefreshSendLinks(); });
+  document.addEventListener('ort:lang', ()=>{ render(); cartRefreshSendLinks(); });
+})();
+</script>
+</body>
+</html>

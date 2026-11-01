@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maintenance &amp; Repair — ORT WATT</title>
+<meta name="description" content="Component level diagnosis and repair for inverters, lithium batteries and battery management systems, including systems ORT did not supply.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main>
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="nav.home"></a> <span>/</span> <span data-t="nav.maintenance"></span></nav>
+      <h1 data-t="maint.title"></h1>
+      <p class="lede" data-t="maint.sub"></p>
+    </div>
+  </section>
+
+  <section class="sec wrap">
+    <div class="split narrow-left" style="align-items:start;margin-block-end:3rem">
+      <div class="rv"><div class="index"><span class="n">01</span> <span data-t="svc.title"></span></div></div>
+      <p class="lede rv rv-d1" data-t="maint.intro"></p>
+    </div>
+    <div class="svc-grid rv" id="maint-grid"></div>
+  </section>
+
+  <section class="sec wrap" style="padding-block-start:0">
+    <div class="rv" style="border-block-start:1px solid var(--hair);padding-block-start:2.5rem;
+         display:flex;justify-content:space-between;gap:2rem;flex-wrap:wrap;align-items:end">
+      <h2 class="t-h2" style="max-inline-size:22ch" data-t="ask.title"></h2>
+      <div class="row">
+        <a class="btn btn-signal" href="ask-an-engineer.html"><span data-t="maint.request"></span> <span class="arw">→</span></a>
+        <a class="btn btn-line" href="engineering.html" data-t="nav.engineering"></a>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>
+(function(){
+  // Each cell pairs an illustration from the shared family with a
+  // service. Keeping this as data means the grid stays consistent.
+  const SERVICES = [
+    ['invDiag','invDiag'], ['invRepair','invRepair'], ['batAnalysis','batAnalysis'],
+    ['bms','bms'], ['inspection','inspection'], ['performance','performance'],
+    ['preventive','preventive'], ['techSupport','support'],
+  ];
+  function render(){
+    document.getElementById('maint-grid').innerHTML = SERVICES.map(([ill,key])=>`
+      <a class="svc" href="ask-an-engineer.html">
+        ${ILL[ill]}
+        <h4>${t('maint.'+key)}</h4>
+        <p>${t('maint.'+key+'D')}</p>
+        <span class="svc-cta">${t('maint.request')} <span class="arw">→</span></span>
+      </a>`).join('');
+    ortReveal();
+  }
+  document.addEventListener('DOMContentLoaded', render);
+  document.addEventListener('ort:lang', render);
+})();
+</script>
+</body>
+</html>

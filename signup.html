@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Create account — ORT WATT</title>
+<meta name="description" content="Create an ORT WATT customer account.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+<style>.auth{min-block-size:calc(100vh - 4.75rem);display:grid;grid-template-columns:1fr 1fr;}
+    @media(max-width:860px){.auth{grid-template-columns:1fr;}.auth-side{display:none;}}
+    .auth-f{display:grid;place-items:center;padding:clamp(2rem,6vw,4rem);}
+    .auth-f>div{inline-size:100%;max-inline-size:28rem;}
+    .auth-side{background:var(--navy-900);padding:clamp(2rem,5vw,4rem);display:flex;flex-direction:column;justify-content:space-between;border-inline-start:1px solid var(--hair);}</style>
+</head>
+<body data-page-title="nav.signup" data-page-desc="account.loginSide">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main id="main">
+
+  <div class="auth">
+    <div class="auth-f">
+      <div>
+        <div class="idx"><b>01</b> <span data-t="nav.signup"></span></div>
+        <h1 class="t-h1" style="margin-block:1.25rem 2rem;font-size:clamp(1.9rem,3.4vw,2.6rem)" data-t="account.signupTitle"></h1>
+        <form class="form" id="signup-form" novalidate>
+          <div class="msg err" hidden></div><div class="msg ok" hidden></div>
+          <div class="f2">
+  <div class="fld">
+    <label for="first_name"><span data-t="form.firstName"></span></label>
+    <input id="first_name" name="first_name" type="text" required>
+    <div class="err-msg"></div>
+  </div>
+  <div class="fld">
+    <label for="last_name"><span data-t="form.lastName"></span></label>
+    <input id="last_name" name="last_name" type="text" required>
+    <div class="err-msg"></div>
+  </div></div>
+          
+  <div class="fld">
+    <label for="email"><span data-t="form.email"></span></label>
+    <input id="email" name="email" type="email" required data-t-ph="form.emailPh">
+    <div class="err-msg"></div>
+  </div>
+          <div class="f2">
+  <div class="fld">
+    <label for="password"><span data-t="form.password"></span></label>
+    <input id="password" name="password" type="password" required>
+    <div class="err-msg"></div>
+  </div>
+  <div class="fld">
+    <label for="confirm_password"><span data-t="form.confirmPassword"></span></label>
+    <input id="confirm_password" name="confirm_password" type="password" required>
+    <div class="err-msg"></div>
+  </div></div>
+          
+  <!-- Contact details are captured once, here. Checkout then asks
+       only where the goods are going, instead of re-collecting who
+       the customer is. -->
+  <div class="fld">
+    <label for="mobile"><span data-t="form.mobile"></span></label>
+    <input id="mobile" name="mobile" type="tel" required>
+    <div class="hint" data-t="form.mobileWhy"></div>
+    <div class="err-msg"></div>
+  </div>
+
+  <div class="fld">
+    <label for="whatsapp"><span data-t="form.whatsapp"></span> <span class="opt">(<span data-t="form.optional"></span>)</span></label>
+    <input id="whatsapp" name="whatsapp" type="tel">
+    <div class="hint" data-t="form.whatsappHint"></div>
+    <div class="err-msg"></div>
+  </div>
+
+  <div class="f2">
+    <div class="fld">
+      <label for="company"><span data-t="form.company"></span> <span class="opt">(<span data-t="form.optional"></span>)</span></label>
+      <input id="company" name="company">
+      <div class="err-msg"></div>
+    </div>
+    <div class="fld">
+      <label for="country"><span data-t="form.country"></span></label>
+      <select id="country" name="country" required></select>
+      <div class="err-msg"></div>
+    </div>
+  </div>
+          <button class="btn btn-signal" type="submit"><span data-t="nav.signup"></span> <span class="arw">→</span></button>
+        </form>
+        <p class="sm muted" style="margin-block-start:1.5rem"><span data-t="form.haveAccount"></span> <a class="lnk" href="login.html" data-t="form.logIn"></a></p>
+      </div>
+    </div>
+    <div class="auth-side">
+      <div class="idx"><b>—</b> <span data-t="nav.account"></span></div>
+      <div>
+        <h2 class="t-h2" data-t="account.loginSide"></h2>
+        <ul class="checks one" style="margin-block-start:2rem"><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="account.l1"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="account.l2"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="account.l3"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="account.l4"></span></li><li><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="account.l5"></span></li></ul>
+      </div>
+      <p class="mono xs dim">ORT WATT · DUBAI</p>
+    </div>
+  </div>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>document.getElementById('signup-form').addEventListener('submit',async e=>{
+    e.preventDefault();const f=e.target,err=f.querySelector('.msg.err');err.hidden=true;
+    if(!ortValidate(f))return;
+    if(f.password.value!==f.confirm_password.value){err.textContent=t('form.passwordMismatch');err.hidden=false;return;}
+    const b=f.querySelector('[type=submit]');b.disabled=true;
+    try{const r=await ortApi.register({first_name:f.first_name.value,last_name:f.last_name.value,
+      email:f.email.value,password:f.password.value,confirm_password:f.confirm_password.value,mobile:f.mobile.value||null,
+        whatsapp:f.whatsapp.value||null, company:f.company.value||null,
+        country:f.country.value||null});
+      ortAuth.token=r.token;ortAuth.user=r.user;location.href='dashboard.html';}
+    catch(ex){err.textContent=ex.message;err.hidden=false;}finally{b.disabled=false;}});</script>
+<script>
+  /* Same country list as checkout, so the value stored on the account
+     matches what shipping zones will later be keyed on. */
+  const COUNTRIES = ['United Arab Emirates','Saudi Arabia','Qatar','Kuwait','Bahrain','Oman',
+    'Nigeria','Ghana','Benin','Togo','C\u00f4te d\u2019Ivoire','Senegal','Cameroon','Kenya',
+    'Tanzania','Uganda','Rwanda','Ethiopia','South Africa','Egypt','Morocco','Algeria','Tunisia',
+    'France','Belgium','Netherlands','Germany','Spain','Italy','United Kingdom',
+    'India','Pakistan','Bangladesh','Turkey','United States','Canada'];
+  function fillCountries(){
+    const sel=document.getElementById('country');
+    if(!sel||sel.options.length) return;
+    sel.innerHTML='<option value=""></option>'+COUNTRIES.map(c=>`<option>${c}</option>`).join('')
+      +`<option value="__other">${t('common.other')}</option>`;
+  }
+  document.addEventListener('DOMContentLoaded', fillCountries);
+  document.addEventListener('ort:lang', fillCountries);
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Engineering — ORT WATT</title>
+<meta name="description" content="System design, sizing, commissioning, troubleshooting and after sales support.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+
+</head>
+<body data-page-title="nav.engineering" data-page-desc="eng.sub">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main id="main">
+
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="err.home"></a> <span>/</span> <span data-t="nav.engineering"></span></nav>
+      <h1 data-t="eng.title"></h1>
+      <p class="lede" data-t="eng.sub"></p>
+    </div>
+  </section>
+  <section class="sec wrap">
+    <div class="svc-grid rv" id="eng-grid"></div></section>
+  <section class="sec light">
+    <div class="wrap split" style="align-items:center">
+      <div class="rv">
+        <div class="idx"><b>—</b> <span data-t="nav.engineeringSub"></span></div>
+        <h2 class="t-h2" style="margin-block-start:1.25rem" data-t="eng.twoWays"></h2>
+        <p class="lede" style="margin-block-start:1rem" data-t="eng.twoWaysBody"></p>
+      </div>
+      <div class="rv d1 stk">
+        <a class="btn btn-solid" style="inline-size:100%" href="ask-an-engineer.html"><span data-t="nav.ask"></span> <span class="arw">→</span></a>
+        <a class="btn btn-line" style="inline-size:100%" href="solar-study.html"><span data-t="study.title"></span> <span class="arw">→</span></a>
+        <a href="help-me-choose.html" class="btn btn-line" style="inline-size:100%" data-open-chooser><span data-t="nav.helpCta"></span> <span class="arw">→</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+
+<script>
+(function(){
+  const SERVICES=['design','sizing','selection','study','commissioning','trouble','maintenance','support'];
+  const LINK={study:'solar-study.html',maintenance:'maintenance-repair.html',
+              support:'ask-an-engineer.html',selection:'equipment.html'};
+  function render(){
+    const g=document.getElementById('eng-grid'); if(!g) return;
+    g.innerHTML=SERVICES.map(k=>`
+      <a class="svc" href="${LINK[k]||'ask-an-engineer.html'}">
+        ${ILL[k]}
+        <h4>${t('svc.'+k)}</h4>
+        <p>${t('svc.'+k+'D')}</p>
+        <span class="svc-cta">${t('common.learnMore')} <span class="arw">→</span></span>
+      </a>`).join('');
+    ortReveal();
+  }
+  document.addEventListener('DOMContentLoaded',render);
+  document.addEventListener('ort:lang',render);
+})();
+</script>
+</body>
+</html>

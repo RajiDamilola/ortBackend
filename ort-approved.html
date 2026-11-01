@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ORT Approved — ORT WATT</title>
+<meta name="description" content="What the ORT Approved mark means and how the quality score is calculated.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+
+</head>
+<body data-page-title="label.approved" data-page-desc="label.approvedWhat">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+<main id="main">
+
+  <section class="phead">
+    <div class="phead-in">
+      <nav class="crumbs"><a href="index.html" data-t="err.home"></a> <span>/</span> <span data-t="nav.why"></span></nav>
+      <h1 data-t="label.approved"></h1>
+      <p class="lede" data-t="label.notCert"></p>
+    </div>
+  </section>
+  <section class="sec wrap">
+    <div class="split l top">
+      <div class="rv"><div class="idx"><b>01</b> <span data-t="nav.why"></span></div></div>
+      <div class="ledger rv d1">
+        
+        <div class="led" style="grid-template-columns:4.5rem 11rem 1fr">
+          <span class="led-n">01</span>
+          <span class="badge b-selected"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="label.selected"></span></span>
+          <p data-t="label.selectedWhat"></p>
+        </div>
+        <div class="led" style="grid-template-columns:4.5rem 11rem 1fr">
+          <span class="led-n">02</span>
+          <span class="badge b-verified"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="label.verified"></span></span>
+          <p data-t="label.verifiedWhat"></p>
+        </div>
+        <div class="led" style="grid-template-columns:4.5rem 11rem 1fr">
+          <span class="led-n">03</span>
+          <span class="badge b-approved"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="label.approved"></span></span>
+          <p data-t="label.approvedWhat"></p>
+        </div>
+        <div class="led" style="grid-template-columns:4.5rem 11rem 1fr">
+          <span class="led-n">04</span>
+          <span class="badge b-premium"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="2"/></svg><span data-t="label.premium"></span></span>
+          <p data-t="label.premiumWhat"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec light">
+    <div class="wrap split top" style="gap:clamp(2rem,6vw,5rem)">
+      <div class="rv">
+        <div class="idx"><b>02</b> <span data-t="score.label"></span></div>
+        <h2 class="t-h2" style="margin-block-start:1.5rem" data-t="score.explain"></h2>
+        <p class="lede" style="margin-block-start:1rem" data-t="score.explainBody"></p>
+        <p class="mono xs dim" style="margin-block-start:2rem" data-t="score.tapHint"></p>
+      </div>
+      <div class="rv d1">
+        <div id="dial-mount" style="margin-block-end:2rem"></div>
+        <div id="crit-mount"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec wrap">
+    <div class="rv" style="max-inline-size:42rem">
+      <div class="idx"><b>03</b> <span data-t="label.notCert"></span></div>
+    </div>
+  </section>
+</main>
+<div id="slot-footer"></div>
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>function r(){
+    document.getElementById('dial-mount').innerHTML=ortDial(4.7);
+    document.getElementById('crit-mount').innerHTML=ortCriteria({reliability:4.8,value:4.9,performance:4.7,warranty:4.5,parts:4.6},'cw');
+    ortBindCriteria();ortReveal();}
+  document.addEventListener('DOMContentLoaded',r);document.addEventListener('ort:lang',r);</script>
+</body>
+</html>

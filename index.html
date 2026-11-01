@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ORT WATT — Selected solar equipment, transparent pricing, engineering support</title>
+<meta name="description" content="Thousands of solar products exist. ORT WATT evaluates manufacturers, compares equipment and selects only what meets our standards.">
+<meta name="color-scheme" content="light">
+<script>try{var m=localStorage.getItem('ort-theme')||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',m);document.querySelector('meta[name="color-scheme"]').setAttribute('content',m);}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/system.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+  /* =========================================================
+     HERO — photographic.
+     Structure follows the reference: dark field, headline on the
+     inline-start, a row of glass capability cards, warm glow from
+     the corners. The photograph is the ground; scrims keep the
+     type legible over it without flattening the panels.
+     ========================================================= */
+  .hero{
+    position:relative;isolation:isolate;overflow:hidden;
+    background:#0A0B09;color:#fff;
+    display:flex;flex-direction:column;justify-content:center;
+    min-block-size:min(94vh,56rem);
+  }
+
+  /* --- Layer 1: the photograph --- */
+  .hero-media{position:absolute;inset:0;z-index:-3;}
+  .hero-media img{
+    inline-size:100%;block-size:100%;object-fit:cover;object-position:50% 60%;
+    filter:saturate(1.06) contrast(1.05);
+    transform:scale(1.05);
+    animation:heroDrift 28s var(--ease-in-out) infinite alternate;
+  }
+  @keyframes heroDrift{to{transform:scale(1.13) translate3d(0,-1.4%,0);}}
+
+  /* --- Layer 2: scrim. Heaviest where the type sits, clearing
+         toward the inline-end so the array stays readable. --- */
+  .hero-veil{
+    position:absolute;inset:0;pointer-events:none;
+    background:
+      linear-gradient(to bottom, rgba(7,8,6,.80) 0%, rgba(7,8,6,.40) 34%, rgba(7,8,6,.58) 74%, rgba(7,8,6,.95) 100%),
+      linear-gradient(to right,  rgba(7,8,6,.90) 0%, rgba(7,8,6,.58) 44%, rgba(7,8,6,.16) 76%, rgba(7,8,6,.38) 100%);
+  }
+  [dir="rtl"] .hero-veil{
+    background:
+      linear-gradient(to bottom, rgba(7,8,6,.80) 0%, rgba(7,8,6,.40) 34%, rgba(7,8,6,.58) 74%, rgba(7,8,6,.95) 100%),
+      linear-gradient(to left,   rgba(7,8,6,.90) 0%, rgba(7,8,6,.58) 44%, rgba(7,8,6,.16) 76%, rgba(7,8,6,.38) 100%);
+  }
+  /* --- Layer 3: brand glow bleeding from the corners --- */
+  .hero-grid-lines{
+    position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+    background:
+      radial-gradient(40rem 27rem at -7% 2%,   rgba(255,232,16,.32), transparent 62%),
+      radial-gradient(34rem 24rem at 105% 98%, rgba(255,196,20,.22), transparent 60%);
+  }
+  @media(prefers-reduced-motion:reduce){.hero-media img{animation:none;transform:scale(1.05);}}
+
+  .hero-inner{position:relative;z-index:1;padding-block:clamp(4rem,10vh,6.5rem) clamp(1.5rem,4vh,2.5rem);}
+
+  /* Headline block beside the proof panel */
+  .hero-top{
+    display:grid;grid-template-columns:1.25fr .75fr;
+    gap:clamp(1.75rem,4vw,3.5rem);align-items:center;
+  }
+  @media(max-width:960px){.hero-top{grid-template-columns:1fr;}}
+  .hero-say{min-inline-size:0;}
+
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:.6rem;
+    padding:.42rem .9rem;border:1px solid rgba(255,255,255,.26);border-radius:999px;
+    background:rgba(255,255,255,.07);backdrop-filter:blur(8px);
+    font-family:var(--f-m);font-size:var(--t-mono);letter-spacing:.16em;
+    text-transform:uppercase;color:rgba(255,255,255,.92);
+  }
+  [dir="rtl"] .hero-eyebrow{font-family:var(--f-ar);letter-spacing:0;text-transform:none;font-size:var(--t-xs);}
+  .dotpulse{
+    inline-size:.45rem;block-size:.45rem;border-radius:50%;background:var(--sun);
+    box-shadow:0 0 0 0 rgba(255,232,16,.7);animation:pulse 2.4s var(--ease-in-out) infinite;
+  }
+  @keyframes pulse{70%{box-shadow:0 0 0 .55rem rgba(255,232,16,0);}100%{box-shadow:0 0 0 0 rgba(255,232,16,0);}}
+
+  .hero-h{
+    font-family:var(--f-d);font-weight:700;letter-spacing:-.055em;line-height:1.03;
+    font-size:clamp(2.3rem,5.6vw,4.35rem);margin-block-start:1.4rem;
+    max-inline-size:18ch;text-wrap:balance;
+  }
+  [dir="rtl"] .hero-h{font-family:var(--f-ar);letter-spacing:0;line-height:1.35;}
+  .hero-h .hl1{display:block;color:#fff;}
+  .hero-h .hl2{
+    display:block;color:var(--sun);
+    background-image:linear-gradient(var(--sun),var(--sun));
+    background-size:100% 3px;background-repeat:no-repeat;background-position:0 100%;
+    padding-block-end:.08em;width:fit-content;
+  }
+  [dir="rtl"] .hero-h .hl2{background-position:100% 100%;}
+
+  .hero-sub{
+    margin-block-start:1.3rem;max-inline-size:46ch;
+    font-size:clamp(1rem,1.4vw,1.18rem);line-height:1.62;color:rgba(255,255,255,.85);
+  }
+  .hero-cta{display:flex;gap:.7rem;flex-wrap:wrap;margin-block-start:1.9rem;}
+  .hero-cta .btn-signal{box-shadow:0 12px 32px -14px rgba(255,232,16,.6);}
+  .btn-ghost{
+    border:1.5px solid rgba(255,255,255,.34);color:#fff;
+    background:rgba(255,255,255,.07);backdrop-filter:blur(10px);
+  }
+  .btn-ghost:hover{background:#fff;color:var(--carbon);border-color:#fff;}
+
+  /* Glass capability cards */
+  /* Card row. One owner for every breakpoint, so no two rules can
+     disagree about the flow direction.
+       desktop  : three equal columns
+       tablet   : two columns
+       phone    : a single stacked column (no auto-flow, no rail) */
+  .hero-cards{
+    display:grid;grid-auto-flow:row;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:.8rem;margin-block-start:clamp(2rem,4.5vh,3rem);
+  }
+  @media(max-width:900px){
+    .hero-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;}
+  }
+  @media(max-width:599px){
+    .hero-cards{grid-template-columns:minmax(0,1fr);gap:.55rem;}
+  }
+  .hcard{
+    position:relative;display:flex;flex-direction:column;
+    padding:1.1rem 1.2rem 1.2rem;padding-inline-end:2.6rem;
+    border:1px solid rgba(255,255,255,.16);border-radius:14px;
+    background:linear-gradient(150deg,rgba(255,255,255,.11),rgba(255,255,255,.04));
+    backdrop-filter:blur(14px);
+    transition:transform .28s var(--ease),border-color .28s var(--ease),background .28s var(--ease);
+  }
+  .hcard:hover{
+    transform:translateY(-4px);border-color:rgba(255,232,16,.55);
+    background:linear-gradient(150deg,rgba(255,232,16,.15),rgba(255,255,255,.05));
+  }
+  .hcard-arw{
+    position:absolute;inset-block-start:.95rem;inset-inline-end:1rem;
+    color:rgba(255,255,255,.55);font-size:1rem;line-height:1;
+    transition:color .25s var(--ease),transform .25s var(--ease);
+  }
+  .hcard:hover .hcard-arw{color:var(--sun);transform:translate(3px,-3px);}
+  [dir="rtl"] .hcard-arw{transform:scaleX(-1);}
+  [dir="rtl"] .hcard:hover .hcard-arw{transform:scaleX(-1) translate(3px,-3px);}
+  /* Set in the body face, not uppercase monospace.
+     Uppercase mono inside a 13ch box broke every title onto three
+     lines ("SELECTED / BY / ENGINEERS"), and because grid rows
+     stretch to match, all three cards grew to that height. */
+  .hcard h3{
+    font-family:var(--f-b);font-size:1.02rem;letter-spacing:-.015em;
+    font-weight:700;color:#fff;line-height:1.3;max-inline-size:none;
+    text-wrap:balance;overflow-wrap:break-word;
+  }
+  @media(max-width:599px){
+    .hcard{padding:1rem 2.4rem 1rem 1.05rem;}
+    .hcard h3{font-size:1rem;}
+    .hcard p{font-size:var(--t-xs);margin-block-start:.35rem;}
+  }
+  [dir="rtl"] .hcard h3{font-family:var(--f-ar);font-size:1rem;}
+  .hcard p{margin-block-start:.5rem;font-size:var(--t-xs);line-height:1.55;color:rgba(255,255,255,.72);}
+
+  /* Foot: scroll cue + hard facts */
+  /* Phone: CTAs stack full width, the foot becomes a column.
+     Kept here with the rest of the hero so nothing competes. */
+  @media(max-width:599px){
+    .hero{min-block-size:auto;}
+    .hero-inner{padding-block:2.5rem 1.75rem;}
+    .hero-top{gap:1.75rem;}
+    .hero-h{font-size:clamp(1.95rem,8.5vw,2.5rem);max-inline-size:none;}
+    .hero-sub{font-size:1.0625rem;max-inline-size:none;}
+    .hero-cta{flex-direction:column;align-items:stretch;gap:.6rem;margin-block-start:1.6rem;}
+    .hero-foot{flex-direction:column;align-items:flex-start;gap:1rem;}
+  }
+  .hero-foot{
+    display:flex;justify-content:space-between;align-items:center;gap:1.5rem;flex-wrap:wrap;
+    margin-block-start:clamp(1.75rem,4vh,2.75rem);padding-block-start:1.1rem;
+    border-block-start:1px solid rgba(255,255,255,.16);
+  }
+  .hero-scroll{color:rgba(255,255,255,.72);}
+  .hero-scroll:hover{color:var(--sun);}
+  .hero-scroll .arw.down{display:inline-block;animation:bob 2s var(--ease-in-out) infinite;}
+  [dir="rtl"] .hero-scroll .arw.down{transform:none;}
+  @keyframes bob{0%,100%{transform:translateY(0);opacity:.6;}50%{transform:translateY(4px);opacity:1;}}
+  /* Facts strip. A wrapping flex row on wide screens; a fixed two-up
+     grid on a phone, so the four values line up instead of wrapping
+     into a ragged 3+1. */
+  .hero-facts{display:flex;gap:clamp(1.15rem,3.5vw,2.75rem);flex-wrap:wrap;margin:0;}
+  @media(max-width:599px){
+    .hero-facts{
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:1rem 1.15rem;inline-size:100%;
+    }
+  }
+  .hero-facts dt{
+    font-family:var(--f-m);font-size:var(--t-mono);letter-spacing:.16em;
+    text-transform:uppercase;color:rgba(255,255,255,.55);
+  }
+  [dir="rtl"] .hero-facts dt{font-family:var(--f-ar);letter-spacing:0;text-transform:none;}
+  .hero-facts dd{
+    margin:0;font-family:var(--f-d);font-weight:700;font-size:1.1rem;
+    letter-spacing:-.045em;margin-block-start:.2rem;color:#fff;
+  }
+  @media(max-width:600px){.hero-scroll{display:none;}}
+
+  /* Proof panel: a real assessed product */
+  .specimen{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);
+    border-radius:16px;backdrop-filter:blur(16px);overflow:hidden;
+    box-shadow:0 24px 60px -30px rgba(0,0,0,.8);
+  }
+  .sp-top{
+    display:flex;justify-content:space-between;align-items:center;gap:1rem;
+    padding:.7rem .95rem;border-block-end:1px solid rgba(255,255,255,.16);
+  }
+  .sp-top .code{color:rgba(255,255,255,.6);}
+  .sp-body{padding:1.15rem;}
+  .sp-fig{
+    aspect-ratio:16/10;background:rgba(255,255,255,.07);border-radius:10px;
+    display:grid;place-items:center;color:var(--sun);margin-block-end:1.1rem;
+  }
+  .sp-fig svg{inline-size:46%;block-size:72%;}
+  .sp-meta{
+    font-family:var(--f-m);font-size:var(--t-mono);letter-spacing:.13em;
+    text-transform:uppercase;color:rgba(255,255,255,.55);margin-block-end:.25rem;
+  }
+  .sp-name{
+    font-family:var(--f-d);font-weight:700;font-size:1.1rem;
+    letter-spacing:-.05em;color:#fff;
+  }
+  .sp-name:hover{color:var(--sun);}
+  .sp-foot{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;
+    margin-block-start:1.1rem;padding-block-start:.9rem;
+    border-block-start:1px solid rgba(255,255,255,.16);
+  }
+  .sp-price{font-family:var(--f-d);font-weight:700;font-size:1.2rem;letter-spacing:-.05em;color:#fff;}
+  .sp-price small{
+    display:block;font-family:var(--f-m);font-size:.5625rem;font-weight:400;
+    letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-block-start:.2rem;
+  }
+  /* The gauge sits on dark glass here, so its parts must invert */
+  .specimen .gauge-val,.specimen .gauge-word{color:#fff;}
+  .specimen .gauge-word{color:var(--sun);}
+  .specimen .gauge-of,.specimen .gauge-num{color:rgba(255,255,255,.55);}
+  .specimen .gauge-axis{background:rgba(255,255,255,.22);}
+  .specimen .gauge-fill{background:var(--sun);}
+  .specimen .gauge-tick{background:rgba(255,255,255,.3);}
+  .specimen .gauge-tick.major{background:rgba(255,255,255,.55);}
+  .specimen .lnk{color:var(--sun);}
+  .specimen .badge{border:0;}
+
+  /* Shared page bits */
+  .head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:1.5rem;flex-wrap:wrap;}
+  .help-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:var(--gut);align-items:end;}
+  @media(max-width:860px){.help-grid{grid-template-columns:1fr;}}
+  .help-act{display:flex;flex-direction:column;align-items:flex-start;}
+</style>
+</head>
+<body data-page-title="nav.equipment">
+<div id="slot-gate"></div>
+<div id="slot-header"></div>
+
+<main id="main">
+
+  <!-- ==========================================================
+       HERO — the thesis.
+       Not a big number and a gradient. The most characteristic
+       thing in this company's world is a specification sheet with
+       an engineer's verdict on it, so the hero IS one: identity in
+       navy on the brand yellow, the slogan set as a statement, and
+       a live reading of a product ORT has actually judged.
+       ========================================================== -->
+  <!-- ==========================================================
+       HERO
+       The photograph carries the scale of the work; a layered scrim
+       carries the type. Three capability cards sit over the image,
+       following the reference layout, and a trust strip closes it.
+       ========================================================== -->
+  <section class="hero" id="hero">
+    <div class="hero-media" aria-hidden="true">
+      <picture>
+        <source media="(max-width:700px)" srcset="assets/hero-mobile.jpg">
+        <source media="(max-width:1100px)" srcset="assets/hero-960.jpg">
+        <source media="(max-width:1500px)" srcset="assets/hero-1280.jpg">
+        <img src="assets/hero-1920.jpg" alt="" width="1920" height="1078"
+             fetchpriority="high" decoding="async">
+      </picture>
+      <span class="hero-veil"></span>
+      <span class="hero-grid-lines"></span>
+    </div>
+
+    <div class="wrap hero-inner">
+      <div class="hero-top">
+        <div class="hero-say">
+          <span class="hero-eyebrow rv in">
+            <span class="dotpulse" aria-hidden="true"></span>
+            <span data-t="home.heroEyebrow"></span>
+          </span>
+
+          <h1 class="hero-h rv in d1">
+            <span class="hl1" data-t="home.heroL1"></span>
+            <span class="hl2" data-t="home.heroL2"></span>
+          </h1>
+
+          <p class="hero-sub rv in d2" data-t="home.heroSub"></p>
+
+          <div class="hero-cta rv in d3">
+            <a class="btn btn-signal btn-lg" href="equipment.html">
+              <span data-t="home.heroCta1"></span> <span class="arw">&rarr;</span></a>
+            <a class="btn btn-ghost btn-lg" href="ask-an-engineer.html" data-t="home.heroCta2"></a>
+          </div>
+        </div>
+
+        <!-- Proof panel: a real assessed product, not an invented claim -->
+        <aside class="specimen rv in d2" id="specimen"></aside>
+      </div>
+
+      <!-- Three capability cards, following the reference layout -->
+      <div class="hero-cards rv in d4">
+        <a class="hcard" href="how-we-select.html">
+          <span class="hcard-arw" aria-hidden="true">&#8599;</span>
+          <h3 data-t="home.c1t"></h3>
+          <p data-t="home.c1d"></p>
+        </a>
+        <a class="hcard" href="transparent-pricing.html">
+          <span class="hcard-arw" aria-hidden="true">&#8599;</span>
+          <h3 data-t="home.c2t"></h3>
+          <p data-t="home.c2d"></p>
+        </a>
+        <a class="hcard" href="engineering.html">
+          <span class="hcard-arw" aria-hidden="true">&#8599;</span>
+          <h3 data-t="home.c3t"></h3>
+          <p data-t="home.c3d"></p>
+        </a>
+      </div>
+
+      <div class="hero-foot rv in d4">
+        <a class="lnk hero-scroll" href="#funnel">
+          <span data-t="home.scrollCue"></span> <span class="arw down">&darr;</span>
+        </a>
+        <dl class="hero-facts">
+          <div><dt data-t="home.f1k"></dt><dd data-t="home.f1v"></dd></div>
+          <div><dt data-t="home.f2k"></dt><dd data-t="home.f2v"></dd></div>
+          <div><dt data-t="home.f3k"></dt><dd data-t="home.f3v"></dd></div>
+          <div><dt data-t="home.f4k"></dt><dd data-t="home.f4v"></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       THE FUNNEL — how the list gets short
+       ========================================================== -->
+  <section class="sec wrap" id="funnel">
+    <div class="sec-head rv">
+      <div>
+        <p class="code" data-t="home.funnelKicker"></p>
+        <h2 class="t-h1" data-t="home.funnelTitle"></h2>
+      </div>
+      <p class="lede" data-t="home.funnelBody"></p>
+    </div>
+    <div>
+      <div>
+
+        <div class="funnel rv" style="margin-block-start:2.5rem">
+          <div class="fn-row">
+            <span class="k" data-t="home.funnelS1"></span>
+            <span class="fn-bar h1"><i data-pct="100"></i></span>
+            <span class="v" data-t="home.funnelS1n"></span>
+          </div>
+          <div class="fn-row">
+            <span class="k" data-t="home.funnelS2"></span>
+            <span class="fn-bar h2"><i data-pct="42"></i></span>
+            <span class="v" data-t="home.funnelS2n"></span>
+          </div>
+          <div class="fn-row">
+            <span class="k" data-t="home.funnelS3"></span>
+            <span class="fn-bar h3"><i data-pct="14"></i></span>
+            <span class="v" data-t="home.funnelS3n"></span>
+          </div>
+        </div>
+
+        <div class="rail rail-flow rv" style="margin-block-start:3rem" id="funnel-rail"></div>
+        <a class="lnk lnk-signal rv" style="margin-block-start:2rem" href="how-we-select.html">
+          <span data-t="home.funnelCta"></span> <span class="arw">&rarr;</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       THE EIGHT STAGES — a real sequence, so numbering is earned
+       ========================================================== -->
+  <section class="sec light">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <div>
+          <p class="code" data-t="journey.title"></p>
+          <h2 class="t-h1" data-t="journey.title"></h2>
+        </div>
+        <p class="lede" data-t="journey.sub"></p>
+      </div>
+      <div style="grid-column:1/-1">
+        <div class="journey" id="journey" style="margin-block-start:2.5rem"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       SELECTED EQUIPMENT
+       ========================================================== -->
+  <section class="sec wrap">
+    <div>
+      <div>
+        <div class="head-row rv">
+          <div>
+            <h2 class="t-h1" data-t="home.proofTitle"></h2>
+            <p class="lede" style="margin-block-start:1rem;max-inline-size:42rem" data-t="home.proofBody"></p>
+          </div>
+          <a class="lnk lnk-signal" href="equipment.html">
+            <span data-t="home.proofCta"></span> <span class="arw">&rarr;</span></a>
+        </div>
+        <div class="grid-tiles rv" id="home-tiles" style="margin-block-start:2.25rem"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       THE LABEL SYSTEM — colour is the information
+       ========================================================== -->
+  <section class="sec wrap" style="padding-block-start:0">
+    <div>
+      <div>
+        <h2 class="t-h2 rv" data-t="status.title"></h2>
+        <p class="muted rv d1" style="margin-block-start:.85rem;max-inline-size:42rem" data-t="status.sub"></p>
+        <div class="legend rv" id="legend" style="margin-block-start:1.75rem"></div>
+        <div class="note note-flag rv" style="margin-block-start:1.5rem;max-inline-size:44rem">
+          <p data-t="status.note"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       HOW IT FITS TOGETHER — interactive diagram
+       ========================================================== -->
+  <section class="sec light">
+    <div class="wrap">
+      <div>
+        <p class="code rv" data-t="home.diagramKicker"></p>
+        <h2 class="t-h1 rv" data-t="home.diagramTitle"></h2>
+        <p class="lede rv d1" style="margin-block-start:1rem;max-inline-size:44rem" data-t="home.diagramBody"></p>
+        <div class="rv" id="sysdiagram" style="margin-block-start:2.5rem"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       HELP ME CHOOSE — full yellow field, the logo at page scale
+       ========================================================== -->
+  <section class="on-sun">
+    <div class="wrap sec help-grid">
+      <div class="rv">
+        <p class="code" data-t="home.helpKicker"></p>
+        <h2 class="t-hero" style="margin-block:1rem .85rem;max-inline-size:18ch" data-t="home.helpTitle"></h2>
+        <p class="lede" style="max-inline-size:38rem" data-t="home.helpBody"></p>
+      </div>
+      <div class="rv d1 help-act">
+        <a href="help-me-choose.html" class="btn btn-solid btn-lg" data-open-chooser style="inline-size:100%">
+          <span data-t="home.helpCta"></span> <span class="arw">&rarr;</span></a>
+        <a class="lnk" href="ask-an-engineer.html" style="margin-block-start:1.15rem" data-t="home.helpAlt"></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       PRICING — the equation, on the navy band
+       ========================================================== -->
+  <section class="sec on-ink">
+    <div class="wrap">
+      <div class="rv" style="max-inline-size:46rem">
+        <p class="code" data-t="home.priceKicker"></p>
+        <h2 class="t-h1" style="margin-block:1rem .85rem" data-t="home.priceTitle"></h2>
+        <p class="lede" data-t="home.priceBody"></p>
+      </div>
+      <div class="eq rv" style="margin-block-start:2.5rem">
+
+        <div class="eq-line">
+          <div class="eq-card">
+            <div>
+              <div class="eq-k" data-t="price.ref"></div>
+              <div class="eq-note" data-t="price.refNote"></div>
+            </div>
+            <div class="eq-amt" id="eq-ref"></div>
+          </div>
+        </div>
+
+        <div class="eq-join"><i></i><span class="eq-op">+</span><span data-t="price.joinFee"></span></div>
+
+        <div class="eq-line fee">
+          <div class="eq-card">
+            <div>
+              <div class="eq-k" data-t="price.fee"></div>
+              <div class="eq-note" id="eq-fee"></div>
+            </div>
+            <div class="eq-amt" id="eq-feeAmt"></div>
+          </div>
+        </div>
+
+        <div class="eq-join"><i></i><span class="eq-op">=</span><span data-t="price.joinTotal"></span></div>
+
+        <div class="eq-line total">
+          <div class="eq-card">
+            <div>
+              <div class="eq-k" data-t="price.total"></div>
+              <div class="eq-note" data-t="price.totalNote"></div>
+            </div>
+            <div class="eq-amt" id="eq-total"></div>
+          </div>
+        </div>
+      </div>
+
+      <a class="lnk rv" style="margin-block-start:2rem;color:var(--sun)" href="transparent-pricing.html">
+        <span data-t="home.priceCta"></span> <span class="arw">&rarr;</span></a>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       AFTER YOU BUY
+       ========================================================== -->
+  <section class="sec wrap">
+    <div>
+      <div>
+        <p class="code rv" data-t="home.journeyKicker"></p>
+        <h2 class="t-h1 rv" data-t="home.journeyTitle"></h2>
+        <p class="lede rv d1" style="margin-block-start:1rem;max-inline-size:44rem" data-t="home.journeyBody"></p>
+        <div class="jrn rv" id="after-buy" style="margin-block-start:2.5rem"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       CLOSING
+       ========================================================== -->
+  <section class="on-sun">
+    <div class="wrap" style="padding-block:clamp(3.5rem,8vw,6rem)">
+      <h2 class="t-mega rv" style="max-inline-size:14ch" data-t="home.endTitle"></h2>
+      <p class="lede rv d1" style="margin-block-start:1.25rem;max-inline-size:40rem" data-t="home.endBody"></p>
+      <div class="row rv d2" style="margin-block-start:2rem">
+        <a class="btn btn-solid btn-lg" href="equipment.html">
+          <span data-t="home.endCta1"></span> <span class="arw">&rarr;</span></a>
+        <a class="btn btn-line btn-lg" href="ask-an-engineer.html" data-t="home.endCta2"></a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="slot-footer"></div>
+
+<script src="js/theme.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/illustrations.js"></script>
+<script src="js/api.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/layout.js"></script>
+<script>
+/* Render everything that depends on the chosen language, and
+   re-render whenever the language changes. */
+function renderHome(){
+  // Every mount is looked up defensively. Previously this function
+  // addressed three elements that a redesign had removed; the first
+  // null threw and silently killed everything after it — the product
+  // tiles, the price figures, the after-sales stages and the system
+  // diagram all vanished from one missing line.
+  const el = id => document.getElementById(id);
+  const set = (id, html) => { const n = el(id); if(n) n.innerHTML = html; };
+  const txt = (id, value) => { const n = el(id); if(n) n.textContent = value; };
+
+  // Selected equipment
+  set('home-tiles', ORT_PRODUCTS.slice(0,6).map(p=>ortTile(p)).join(''));
+
+  // Transparent pricing. Block widths are proportional to the money.
+  txt('eq-ref',    tMoney(500));
+  txt('eq-feeAmt', tMoney(50));
+  txt('eq-fee',    tNum(10) + '% ' + t('price.ofSupplier'));
+  txt('eq-total',  tMoney(550));
+
+  // The specimen: highest scored product, filed with its verdict.
+  const spec = [...ORT_PRODUCTS].sort((a,b)=>b.score-a.score)[0];
+  if(spec){
+    const pr = ortPrice(spec);
+    set('specimen', `
+      <div class="sp-top">
+        <span class="code">${t('score.verifiedOn',{date:tDate(spec.verifiedOn)})}</span>
+        <span class="badge b-${spec.label}">${t('label.'+spec.label)}</span>
+      </div>
+      <div class="sp-body">
+        <div class="sp-fig">${FIG[spec.figure]}</div>
+        <div class="sp-meta">${spec.brand} &middot; ${pText(spec).catLabel}</div>
+        <a class="sp-name ltr" href="product.html?p=${spec.slug}">${spec.model}</a>
+        <div style="margin-block-start:1rem">${ortDial(spec.score,{size:'sm'})}</div>
+        <div class="sp-foot">
+          <span class="sp-price">${tMoney(pr.total)}<small>${t('eq.inclFee',{pct:tNum(spec.feePercent)})}</small></span>
+          <a class="lnk lnk-signal" href="product.html?p=${spec.slug}">${t('eq.view')} <span class="arw">&rarr;</span></a>
+        </div>
+      </div>`);
+  }
+
+  // Selection rail: four stages, connected
+  set('funnel-rail', [1,2,3,4].map(n=>`
+    <div class="rail-s">
+      <span class="n">${String(n).padStart(2,'0')}</span>
+      <h4>${t('home.funnelStep'+n)}</h4>
+      <p>${t('home.funnelStep'+n+'d')}</p>
+    </div>`).join(''));
+
+  // After you buy: six stages, each with its own illustration
+  const ABI = ['equipment','engineering','installation','commissioning','servicing','aftercare'];
+  set('after-buy', ABI.map((ill,i)=>{
+    const n = i+1;
+    return `<div class="jrn-s">
+      <span class="jrn-ill">${ILL[ill]}</span>
+      <span class="n">${String(n).padStart(2,'0')}</span>
+      <h4>${t('home.j'+n)}</h4>
+      <p>${t('home.j'+n+'d')}</p>
+    </div>`;
+  }).join(''));
+
+  ortReveal();
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{ renderHome(); ortDiagram('sysdiagram'); });
+document.addEventListener('ort:lang', renderHome);
+</script>
+<script>
+(function(){
+  const STAGES=[1,2,3,4,5,6,7,8];
+  const LABELS=['approved','verified','premium','selected'];
+  function render(){
+    const j=document.getElementById('journey');
+    if(j) j.innerHTML=STAGES.map(n=>`
+      <div class="jstep rv">
+        <span class="jstep-n">0${n}</span>
+        <h4>${t('journey.s'+n)}</h4>
+        <p>${t('journey.s'+n+'d')}</p>
+      </div>`).join('');
+    const l=document.getElementById('legend');
+    if(l) l.innerHTML=LABELS.map(k=>`
+      <div class="legend-row">
+        <span class="badge b-${k}">${t('label.'+k)}</span>
+        <p>${t('label.'+k+'What')}</p>
+      </div>`).join('');
+    ortReveal();
+  }
+  document.addEventListener('DOMContentLoaded',render);
+  document.addEventListener('ort:lang',render);
+})();
+</script>
+</body>
+</html>
