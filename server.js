@@ -106,7 +106,7 @@ async function enrichCart(raw) {
   }
   if (!Array.isArray(list)) return null;
   
-  const enriched =;
+  const enriched = [];
   for (const it of list) {
     const slug = String(it.slug || it.id || '');
     const qty = Math.max(1, parseInt(it.qty || it.quantity || 1, 10) || 1);
