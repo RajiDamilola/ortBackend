@@ -349,9 +349,9 @@ res.json({ success: true });
 // ---------- Frontend live seeding ----------
 app.get(['/data.js', '/js/data.js'], wrap(async (req, res) => {
   const s = await getSettings();
-  const prodRes = await pool.query('SELECT * FROM products WHERE published = 1 ORDER BY sort_order');
+    const prodRes = await pool.query('SELECT * FROM products WHERE published = 1 ORDER BY sort_order');
   const activeProducts = prodRes.rows.map(rowToProduct);
-  // Generate the data.js file content purely out of your live cloud database values
+
   const scriptContent = 
     'var ORT_WHATSAPP = ' + JSON.stringify(s.whatsapp) + ';\n' +
     'var ORT_ORDERS_EMAIL = ' + JSON.stringify(s.orders_email) + ';\n' +
@@ -365,15 +365,15 @@ app.get(['/data.js', '/js/data.js'], wrap(async (req, res) => {
     '          if (/cart/i.test(k)) { o.body.append("cart", localStorage.getItem(k)); break; } } }\n' +
     '    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}\n' +
     '})();\n';
+
   res.type('application/javascript').set('Cache-Control', 'no-cache').send(scriptContent);
 }));
 
-  res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
-}));
-app.get('*', (req, res, next) => {
-if (req.url.startsWith('/api') || req.url.includes('.')) return next();
-res.sendFile(path.join(__dirname, 'index.html'));
+app.get('*', (req, res, next) => { 
+  if (req.url.startsWith('/api') || req.url.includes('.')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
+
 app.listen(PORT, '0.0.0.0', () => {
-console.log('Server started successfully on port ' + {PORT});
+  console.log('Server started successfully on port ' + PORT);
 });
