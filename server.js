@@ -12,7 +12,7 @@ const multer = require('multer');
 
 // ---------- Config ----------
 const PORT = process.env.PORT || 3000;
-const FRONTEND_DIR = __dirname; // Point directly to the root folder where loose files are
+const FRONTEND_DIR = __dirname; 
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || './data');
 const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
 
@@ -41,7 +41,7 @@ const STATUSES = ['new', 'review', 'quoted', 'closed', 'expired'];
 const DEFAULT_CATEGORIES = ['complete', 'panels', 'inverters', 'batteries', 'controllers'];
 
 function loadFrontendData() {
-  const file = path.join(FRONTEND_DIR, 'data.js'); // Look for loose data.js
+  const file = path.join(FRONTEND_DIR, 'data.js'); 
   if (!fs.existsSync(file)) return {};
   const noop = () => {};
   const ctx = {
@@ -79,7 +79,7 @@ db.transaction(() => {
   if (db.prepare('SELECT COUNT(*) n FROM products').get().n === 0 && Array.isArray(fd.products)) {
     const ins = db.prepare('INSERT INTO products (slug, category, published, sort_order, data) VALUES (?, ?, 1, ?, ?)');
     fd.products.forEach((p, i) => p && p.slug && ins.run(p.slug, p.category || '', i, JSON.stringify(p)));
-    console.log("Seeded " + fd.products.length + " products from frontend/data.js");
+    console.log(`Seeded ${fd.products ? fd.products.length : 0} products from frontend/data.js`);
   }
   const setDef = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
   setDef.run('whatsapp', String(fd.whatsapp || '22961632589'));
@@ -169,15 +169,10 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Handle file extensions directly out of root folder
+// Serve files directly out of the root folder, handling subfolder redirects
 app.use(express.static(__dirname));
 app.use('/js', express.static(__dirname));
 app.use('/css', express.static(__dirname));
-
-app.get('*', (req, res, next) => { 
-  if (req.url.startsWith('/api') || req.url.includes('.')) return next();
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
 
 const formOnly = multer().none();
 const upload = multer({
@@ -196,7 +191,7 @@ app.post('/api/admin/uploads', requireAdmin, upload.single('image'), wrap((req, 
 }));
 app.post('/api/auth/register', formOnly, wrap((req, res) => {
   const { email, password, first_name, last_name, mobile, ...rest } = req.body || {};
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) throw httpErr(400, 'Please enter a valid email.');
+  if (!email || !/\S+@\S+\.\S+$/.test(email)) throw httpErr(400, 'Please enter a valid email.');
   if (!password || String(password).length < 6) throw httpErr(400, 'Password must be at least 6 characters.');
   Object.keys(rest).forEach(k => { if (/pass/i.test(k)) delete rest[k]; });
   try {
@@ -267,14 +262,14 @@ app.post('/api/requests', upload.any(), wrap((req, res) => {
     size: f.size, type: f.mimetype }));
   const info = db.prepare('INSERT INTO requests (kind, user_id, email, fields, files) VALUES (?, ?, ?, ?, ?)')
     .run(kind, uid, email, JSON.stringify(fields), JSON.stringify(files));
-  console.log("New " + kind + " request #" + info.lastInsertRowid);
+  console.log(`New ${kind} request #${info.lastInsertRowid}`);
   res.json({ success: true, id: info.lastInsertRowid });
 }));
 
 app.get('/api/requests/mine', requireUser, wrap((req, res) => {
   expireOld();
   const u = db.prepare('SELECT email FROM users WHERE id = ?').get(req.uid) || {};
-  const rows = db.prepare('SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE) ORDER BY created_at DESC').all(req.uid, u.email || '');
+  const rows = db.prepare(`SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE) ORDER BY created_at DESC`).all(req.uid, u.email || '');
   res.json(rows.map(r => {
     const x = formatRequest(r);
     return { id: x.id, kind: x.kind, status: x.status, created_at: x.created_at, updated_at: x.updated_at,
@@ -296,7 +291,7 @@ app.get('/api/admin/dashboard', requireAdmin, wrap((req, res) => {
 }));
 app.post('/api/admin/products', requireAdmin, wrap((req, res) => {
   const p = req.body || {};
-  const slug = slugify(p.slug || (p.brand || '') + "-" + (p.model || ''));
+  const slug = slugify(p.slug || `${p.brand || ''}-${p.model || ''}`);
   if (!slug || !p.brand || !p.model || !p.category) throw httpErr(400, 'Slug, brand, model and category are required.');
   if (!db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(p.category)) throw httpErr(400, 'Unknown category.');
   if (db.prepare('SELECT 1 FROM products WHERE slug = ?').get(slug)) throw httpErr(409, 'Slug already exists.');
@@ -350,10 +345,11 @@ app.get('/js/data.js', (req, res, next) => {
   if (!fs.existsSync(file)) return next();
   const s = getSettings();
   let src = fs.readFileSync(file, 'utf8')
-    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*/, (m, a) => a + JSON.stringify(s.whatsapp))
-    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*/, (m, a) => a + JSON.stringify(s.orders_email));
+    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
+    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
   src += `
-;(function(){ try { var P = \${JSON.stringify(publishedProducts())}; if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); } } catch (e) {} try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch; window.fetch = function (u, o) { try { if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } } } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {} })();`;
+;(function(){ try { var P = \${JSON.stringify(publishedProducts())}; if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); } } catch (e) {} try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch; window.fetch = function (u, o) { try { if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } } } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {} })();
+`;
   res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
 });
 
@@ -380,5 +376,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log("Server started successfully on port " + PORT);
+  console.log(`Server started successfully on port ${PORT}`);
 });
