@@ -180,6 +180,11 @@ app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(__dirname));
+app.get('*', (req, res, next) => { if (req.url.startsWith('/api')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+  
 
 const formOnly = multer().none();
 const upload = multer({
