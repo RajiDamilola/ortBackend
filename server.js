@@ -47,7 +47,7 @@ async function initDb() {
 
     // 2. Automated Seed: Fallback array seeding if tables are empty
     const catCheck = await client.query('SELECT COUNT(*) AS count FROM categories');
-    if (parseInt(catCheck.rows[0].count) === 0) {
+    if (parseInt(catCheck.rows[0].count || 0) === 0) {
       console.log('Seeding store categories into cloud engine...');
       const defaultCategories = ['complete', 'panels', 'inverters', 'batteries', 'controllers'];
       for (let i = 0; i < defaultCategories.length; i++) {
@@ -56,7 +56,7 @@ async function initDb() {
     }
 
     const prodCheck = await client.query('SELECT COUNT(*) AS count FROM products');
-    if (parseInt(prodCheck.rows[0].count) === 0) {
+    if (parseInt(prodCheck.rows[0].count || 0) === 0) {
       const file = path.join(FRONTEND_DIR, 'data.js');
       if (fs.existsSync(file)) {
         console.log('Reading data.js to copy items to cloud storage...');
