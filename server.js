@@ -255,29 +255,33 @@ categories: catRes.rows, settings
 });
 }));
 app.post('/api/admin/products', requireAdmin, wrap(async (req, res) => {
-const p = req.body || {};
-const slug = slugify(p.slug || ${p.brand || ''}-${p.model || ''});
-if (!slug || !p.brand || !p.model || !p.category) throw httpErr(400, 'Slug, brand, model and category are required.');
-const catCheck = await pool.query('SELECT 1 FROM categories WHERE slug = $1', [p.category]);
-if (catCheck.rowCount === 0) throw httpErr(400, 'Unknown category.');
-const slugCheck = await pool.query('SELECT 1 FROM products WHERE slug = $1', [slug]);
-if (slugCheck.rowCount > 0) throw httpErr(409, 'Slug already exists.');
-const { published, sort_order, ...data } = p;
-data.slug = slug;
-await pool.query('INSERT INTO products (slug, category, published, sort_order, data) VALUES ($1, $2, $3, $4, $5)',
-[slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data)]);
-res.status(201).json({ slug });
+  const p = req.body || {};
+  const fallbackSlug = (p.brand || '') + '-' + (p.model || '');
+  const slug = slugify(p.slug || fallbackSlug);
+  if (!slug || !p.brand || !p.model || !p.category) throw httpErr(400, 'Slug, brand, model and category are required.');
+  const catCheck = await pool.query('SELECT 1 FROM categories WHERE slug = $1', [p.category]);
+  if (catCheck.rowCount === 0) throw httpErr(400, 'Unknown category.');
+  const slugCheck = await pool.query('SELECT 1 FROM products WHERE slug = $1', [slug]);
+  if (slugCheck.rowCount > 0) throw httpErr(409, 'Slug already exists.');
+  const { published, sort_order, ...data } = p;
+  data.slug = slug;
+  await pool.query('INSERT INTO products (slug, category, published, sort_order, data) VALUES ($1, $2, $3, $4, $5)',
+    [slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data)]);
+  res.status(201).json({ slug });
 }));
 app.put('/api/admin/products/:slug', requireAdmin, wrap(async (req, res) => {
-const oldCheck = await pool.query('SELECT * FROM products WHERE slug = $1', [req.params.slug]);
-if (oldCheck.rowCount === 0) throw httpErr(404, 'Product not found.');
-const p = req.body || {}, slug = slugify(p.slug || oldCheck.rows[0].slug);
-const { published, sort_order, ...data } = p;
-data.slug = slug;
-await pool.query('UPDATE products SET slug = $1, category = $2, published = $3, sort_order = $4, data = $5, updated_at = CURRENT_TIMESTAMP WHERE slug = $6',
-[slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data), req.params.slug]);
-res.json({ slug });
+  const oldCheck = await pool.query('SELECT * FROM products WHERE slug = $1', [req.params.slug]);
+  if (oldCheck.rowCount === 0) throw httpErr(404, 'Product not found.');
+  const p = req.body || {};
+  const fallbackSlug = (p.brand || '') + '-' + (p.model || '');
+  const slug = slugify(p.slug || fallbackSlug);
+  const { published, sort_order, ...data } = p;
+  data.slug = slug;
+  await pool.query('UPDATE products SET slug = $1, category = $2, published = $3, sort_order = $4, data = $5, updated_at = CURRENT_TIMESTAMP WHERE slug = $6',
+    [slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data), req.params.slug]);
+  res.json({ slug });
 }));
+
 app.delete('/api/admin/products/:slug', requireAdmin, wrap(async (req, res) => {
 const info = await pool.query('DELETE FROM products WHERE slug = $1', [req.params.slug]);
 if (info.rowCount === 0) throw httpErr(404, 'Product not found.');
