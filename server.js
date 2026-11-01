@@ -366,7 +366,12 @@ app.get(['/data.js', '/js/data.js'], wrap(async (req, res) => {
     '    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}\n' +
     '})();\n';
 
-  res.type('application/javascript').set('Cache-Control', 'no-cache').send(scriptContent);
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.send(scriptContent);
 }));
 
 app.get('*', (req, res, next) => { 
