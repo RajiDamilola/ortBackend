@@ -347,28 +347,26 @@ if (info.rowCount === 0) throw httpErr(404, 'Request not found.');
 res.json({ success: true });
 }));
 // ---------- Frontend live seeding ----------
-app.get('/js/data.js', wrap(async (req, res, next) => {
-  const file = path.join(FRONTEND_DIR, 'data.js');
-  if (!fs.existsSync(file)) return next();
+app.get(['/data.js', '/js/data.js'], wrap(async (req, res) => {
   const s = await getSettings();
   const prodRes = await pool.query('SELECT * FROM products WHERE published = 1 ORDER BY sort_order');
   const activeProducts = prodRes.rows.map(rowToProduct);
-
-  let src = fs.readFileSync(file, 'utf8')
-    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
-    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
-    
-  src += '\n;(function(){' +
-    '  try { var P = ' + JSON.stringify(activeProducts) + ';' +
-    '    if (typeof ORT_PRODUCTS !== "undefined" && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); }' +
-    '  } catch (e) {}' +
-    '  try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch;' +
-    '    window.fetch = function (u, o) { try {' +
-    '      if (String(u).indexOf("/api/requests") !== -1 && o && o.body instanceof FormData && o.body.get("kind") === "order" && !o.body.has("cart")) {' +
-    '        for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);' +
-    '          if (/cart/i.test(k)) { o.body.append("cart", localStorage.getItem(k)); break; } } }' +
-    '    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}' +
+  // Generate the data.js file content purely out of your live cloud database values
+  const scriptContent = 
+    'var ORT_WHATSAPP = ' + JSON.stringify(s.whatsapp) + ';\n' +
+    'var ORT_ORDERS_EMAIL = ' + JSON.stringify(s.orders_email) + ';\n' +
+    'var ORT_PRODUCTS = ' + JSON.stringify(activeProducts) + ';\n' +
+    'var ORT_CATEGORIES = ["complete", "panels", "inverters", "batteries", "controllers"].map(function(c){ return {slug: c, key: c}; });\n' +
+    ';(function(){\n' +
+    '  try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch;\n' +
+    '    window.fetch = function (u, o) { try {\n' +
+    '      if (String(u).indexOf("/api/requests") !== -1 && o && o.body instanceof FormData && o.body.get("kind") === "order" && !o.body.has("cart")) {\n' +
+    '        for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);\n' +
+    '          if (/cart/i.test(k)) { o.body.append("cart", localStorage.getItem(k)); break; } } }\n' +
+    '    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}\n' +
     '})();\n';
+  res.type('application/javascript').set('Cache-Control', 'no-cache').send(scriptContent);
+}));
 
   res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
 }));
