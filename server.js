@@ -12,11 +12,10 @@ const multer = require('multer');
 
 // ---------- Config ----------
 const PORT = process.env.PORT || 3000;
-const FRONTEND_DIR = path.resolve(__dirname, process.env.FRONTEND_DIR || '../frontend');
+const FRONTEND_DIR = __dirname; // Point directly to the root folder where loose files are
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || './data');
 const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
 
-// CRASH PREVENTION: Default string fallbacks if your Render environment variables are unconfigured
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'default_admin_password_123';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_string';
 
@@ -33,7 +32,7 @@ CREATE TABLE IF NOT EXISTS categories (slug TEXT PRIMARY KEY, key TEXT NOT NULL,
 CREATE TABLE IF NOT EXISTS products (slug TEXT PRIMARY KEY, category TEXT, published INTEGER DEFAULT 1,
   sort_order INTEGER DEFAULT 0, data TEXT NOT NULL, updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, status TEXT DEFAULT 'new',
-  user_id INTEGER, email TEXT, fields TEXT DEFAULT '{}', files TEXT DEFAULT '[]', admin_note TEXT DEFAULT '',
+  user_id INTEGER, email TEXT, fields TEXT DEFAULT '{}', files TEXT DEFAULT '', admin_note TEXT DEFAULT '',
   created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 `);
@@ -41,9 +40,8 @@ CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 const STATUSES = ['new', 'review', 'quoted', 'closed', 'expired'];
 const DEFAULT_CATEGORIES = ['complete', 'panels', 'inverters', 'batteries', 'controllers'];
 
-// Reads the frontend's own data.js so the seed matches it exactly.
 function loadFrontendData() {
-  const file = path.join(FRONTEND_DIR, 'js', 'data.js');
+  const file = path.join(FRONTEND_DIR, 'data.js'); // Look for loose data.js
   if (!fs.existsSync(file)) return {};
   const noop = () => {};
   const ctx = {
@@ -81,7 +79,7 @@ db.transaction(() => {
   if (db.prepare('SELECT COUNT(*) n FROM products').get().n === 0 && Array.isArray(fd.products)) {
     const ins = db.prepare('INSERT INTO products (slug, category, published, sort_order, data) VALUES (?, ?, 1, ?, ?)');
     fd.products.forEach((p, i) => p && p.slug && ins.run(p.slug, p.category || '', i, JSON.stringify(p)));
-    console.log(`Seeded ${fd.products.length} products from frontend/js/data.js`);
+    console.log("Seeded " + fd.products.length + " products from frontend/data.js");
   }
   const setDef = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
   setDef.run('whatsapp', String(fd.whatsapp || '22961632589'));
@@ -95,7 +93,7 @@ const publishedProducts = () =>
   db.prepare('SELECT * FROM products WHERE published = 1 ORDER BY sort_order, rowid').all().map(rowToProduct);
 const httpErr = (status, message) => Object.assign(new Error(message), { status });
 const wrap = fn => (req, res, next) => { try { fn(req, res, next); } catch (e) { next(e); } };
-const slugify = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+const slugify = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 const sign = (payload, expiresIn) => jwt.sign(payload, JWT_SECRET, { expiresIn });
 
@@ -171,10 +169,10 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// FIXED STATIC ASSET ROUTING AND CATCH-ALL PRIORITIZATION
+// Handle file extensions directly out of root folder
 app.use(express.static(__dirname));
-app.use('/js', express.static(path.join(__dirname, 'js')));
-app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(__dirname));
+app.use('/css', express.static(__dirname));
 
 app.get('*', (req, res, next) => { 
   if (req.url.startsWith('/api') || req.url.includes('.')) return next();
@@ -250,7 +248,7 @@ app.get('/api/products/:slug', (req, res) => {
   res.json(rowToProduct(r));
 });
 
-// ---------- Requests (orders, quotes, contact) ----------
+// ---------- Requests ----------
 app.post('/api/requests', upload.any(), wrap((req, res) => {
   const fields = { ...(req.body || {}) };
   const kind = String(fields.kind || 'general').slice(0, 40);
@@ -269,15 +267,14 @@ app.post('/api/requests', upload.any(), wrap((req, res) => {
     size: f.size, type: f.mimetype }));
   const info = db.prepare('INSERT INTO requests (kind, user_id, email, fields, files) VALUES (?, ?, ?, ?, ?)')
     .run(kind, uid, email, JSON.stringify(fields), JSON.stringify(files));
-  console.log(`New ${kind} request #${info.lastInsertRowid}`);
+  console.log("New " + kind + " request #" + info.lastInsertRowid);
   res.json({ success: true, id: info.lastInsertRowid });
 }));
 
 app.get('/api/requests/mine', requireUser, wrap((req, res) => {
   expireOld();
   const u = db.prepare('SELECT email FROM users WHERE id = ?').get(req.uid) || {};
-  const rows = db.prepare(`SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE)
-    ORDER BY created_at DESC`).all(req.uid, u.email || '');
+  const rows = db.prepare('SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE) ORDER BY created_at DESC').all(req.uid, u.email || '');
   res.json(rows.map(r => {
     const x = formatRequest(r);
     return { id: x.id, kind: x.kind, status: x.status, created_at: x.created_at, updated_at: x.updated_at,
@@ -299,7 +296,7 @@ app.get('/api/admin/dashboard', requireAdmin, wrap((req, res) => {
 }));
 app.post('/api/admin/products', requireAdmin, wrap((req, res) => {
   const p = req.body || {};
-  const slug = slugify(p.slug || `${p.brand || ''}-${p.model || ''}`);
+  const slug = slugify(p.slug || (p.brand || '') + "-" + (p.model || ''));
   if (!slug || !p.brand || !p.model || !p.category) throw httpErr(400, 'Slug, brand, model and category are required.');
   if (!db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(p.category)) throw httpErr(400, 'Unknown category.');
   if (db.prepare('SELECT 1 FROM products WHERE slug = ?').get(slug)) throw httpErr(409, 'Slug already exists.');
@@ -347,27 +344,16 @@ app.get('/api/admin/uploads/:name', requireAdmin, wrap((req, res) => {
   res.sendFile(path.join(UPLOAD_DIR, req.params.name));
 }));
 
-// ---------- Frontend ----------
+// ---------- Frontend live seeding ----------
 app.get('/js/data.js', (req, res, next) => {
-  const file = path.join(FRONTEND_DIR, 'js', 'data.js');
+  const file = path.join(FRONTEND_DIR, 'data.js');
   if (!fs.existsSync(file)) return next();
   const s = getSettings();
   let src = fs.readFileSync(file, 'utf8')
-    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
-    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
+    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*/, (m, a) => a + JSON.stringify(s.whatsapp))
+    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*/, (m, a) => a + JSON.stringify(s.orders_email));
   src += `
-;(function(){
-  try { var P = ${JSON.stringify(publishedProducts())};
-    if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); }
-  } catch (e) {}
-  try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch;
-    window.fetch = function (u, o) { try {
-      if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) {
-        for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);
-          if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } }
-    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}
-})();
-`;
+;(function(){ try { var P = \${JSON.stringify(publishedProducts())}; if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); } } catch (e) {} try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch; window.fetch = function (u, o) { try { if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } } } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {} })();`;
   res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
 });
 
@@ -393,7 +379,6 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: status === 500 ? 'Server error. Please try again.' : err.message });
 });
 
-// Final bound server initiation block safely referencing the PORT constant
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server started successfully on port ${PORT}`);
+  console.log("Server started successfully on port " + PORT);
 });
