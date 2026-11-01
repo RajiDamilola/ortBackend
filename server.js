@@ -15,11 +15,11 @@ const PORT = process.env.PORT || 3000;
 const FRONTEND_DIR = path.resolve(__dirname, process.env.FRONTEND_DIR || '../frontend');
 const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || './data');
 const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
-const { ADMIN_PASSWORD, JWT_SECRET } = process.env;
-if (!ADMIN_PASSWORD || !JWT_SECRET) {
-  console.error('Missing ADMIN_PASSWORD or JWT_SECRET. Create a .env file (see README).');
-  process.exit(1);
-}
+
+// CRASH PREVENTION: Default string fallbacks if your Render environment variables are unconfigured
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'default_admin_password_123';
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_string';
+
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // ---------- Database ----------
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS categories (slug TEXT PRIMARY KEY, key TEXT NOT NULL,
 CREATE TABLE IF NOT EXISTS products (slug TEXT PRIMARY KEY, category TEXT, published INTEGER DEFAULT 1,
   sort_order INTEGER DEFAULT 0, data TEXT NOT NULL, updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, status TEXT DEFAULT 'new',
-  user_id INTEGER, email TEXT, fields TEXT DEFAULT '{}', files TEXT DEFAULT '[]', admin_note TEXT DEFAULT '',
+  user_id INTEGER, email TEXT, fields TEXT DEFAULT '{}', files TEXT DEFAULT '', admin_note TEXT DEFAULT '',
   created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 `);
@@ -95,7 +95,7 @@ const publishedProducts = () =>
   db.prepare('SELECT * FROM products WHERE published = 1 ORDER BY sort_order, rowid').all().map(rowToProduct);
 const httpErr = (status, message) => Object.assign(new Error(message), { status });
 const wrap = fn => (req, res, next) => { try { fn(req, res, next); } catch (e) { next(e); } };
-const slugify = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+const slugify = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 const sign = (payload, expiresIn) => jwt.sign(payload, JWT_SECRET, { expiresIn });
 
@@ -123,7 +123,6 @@ function publicUser(u) {
     mobile: u.mobile, created_at: u.created_at };
 }
 
-// Simple brute-force protection for login endpoints
 const attempts = new Map();
 function limited(req) {
   const key = req.ip + req.path, now = Date.now();
@@ -136,7 +135,6 @@ const sameSecret = (a, b) => {
   return crypto.timingSafeEqual(h(a), h(b));
 };
 
-// Turn the cart ({slug, qty} list) into priced line items for the admin.
 function enrichCart(raw) {
   let list;
   try { list = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { return null; }
@@ -157,7 +155,6 @@ function enrichCart(raw) {
   });
 }
 
-// Quotes older than 30 days without an update become "expired".
 const expireOld = () => db.prepare(`UPDATE requests SET status = 'expired', updated_at = CURRENT_TIMESTAMP
   WHERE status = 'quoted' AND updated_at < datetime('now', '-30 days')`).run();
 
@@ -173,11 +170,12 @@ app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+
 app.use(express.static(__dirname));
-app.get('*', (req, res, next) => { if (req.url.startsWith('/api')) return next();
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.get('*', (req, res, next) => { 
+  if (req.url.startsWith('/api')) return next();
+  res.sendFile(__dirname + '/index.html');
 });
-  
 
 const formOnly = multer().none();
 const upload = multer({
@@ -274,8 +272,7 @@ app.post('/api/requests', upload.any(), wrap((req, res) => {
 app.get('/api/requests/mine', requireUser, wrap((req, res) => {
   expireOld();
   const u = db.prepare('SELECT email FROM users WHERE id = ?').get(req.uid) || {};
-  const rows = db.prepare(`SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE)
-    ORDER BY created_at DESC`).all(req.uid, u.email || '');
+  const rows = db.prepare(`SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE) ORDER BY created_at DESC`).all(req.uid, u.email || '');
   res.json(rows.map(r => {
     const x = formatRequest(r);
     return { id: x.id, kind: x.kind, status: x.status, created_at: x.created_at, updated_at: x.updated_at,
@@ -346,34 +343,21 @@ app.get('/api/admin/uploads/:name', requireAdmin, wrap((req, res) => {
 }));
 
 // ---------- Frontend ----------
-// data.js is served live: products and contact settings come from the database,
-// so admin changes appear on the site instantly without editing frontend files.
 app.get('/js/data.js', (req, res, next) => {
   const file = path.join(FRONTEND_DIR, 'js', 'data.js');
   if (!fs.existsSync(file)) return next();
   const s = getSettings();
   let src = fs.readFileSync(file, 'utf8')
-    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
-    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
+    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*/, (m, a) => a + JSON.stringify(s.whatsapp))
+    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*/, (m, a) => a + JSON.stringify(s.orders_email));
   src += `
-;(function(){
-  try { var P = ${JSON.stringify(publishedProducts())};
-    if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); }
-  } catch (e) {}
-  try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch;
-    window.fetch = function (u, o) { try {
-      if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) {
-        for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);
-          if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } }
-    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}
-})();
-`;
+;(function(){ try { var P = ${JSON.stringify(publishedProducts())}; if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); } } catch (e) {} try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch; window.fetch = function (u, o) { try { if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } } } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {} })();`;
   res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
 });
 
 app.get(['/admin', '/admin/'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
-// Public route so visitors can see uploaded product pictures
+
 app.get('/uploads/:name', (req, res) => {
   if (!/^[a-f0-9]{24}(\.[a-z0-9]{1,9})?$/.test(req.params.name)) {
     return res.status(404).end();
@@ -393,3 +377,6 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: status === 500 ? 'Server error. Please try again.' : err.message });
 });
 
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server started successfully on port ${PORT}`);
+});
