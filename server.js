@@ -5,7 +5,6 @@ const fs = require('fs');
 const vm = require('vm');
 const crypto = require('crypto');
 const express = require('express');
-const cors = require('cors');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
