@@ -333,5 +333,5 @@ if (req.url.startsWith('/api') || req.url.includes('.')) return next();
 res.sendFile(path.join(__dirname, 'index.html'));
 });
 app.listen(PORT, '0.0.0.0', () => {
-console.log(Server started successfully on port ${PORT});
+console.log('Server started successfully on port ' + {PORT});
 });
