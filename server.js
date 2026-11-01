@@ -395,6 +395,7 @@ app.use((err, req, res, next) => {
 
 PORT = process.env.PORT || 5000;
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running perfectly on port ${PORT}`);
+app.listen(process.env.PORT || 5000, '0.0.0.0', () => {
+  console.log(`Server is running perfectly!`);
 });
+
