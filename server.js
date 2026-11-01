@@ -169,7 +169,6 @@ function formatRequest(r) {
 
 // ---------- App ----------
 const app = express();
-app.options('*', cors());
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
