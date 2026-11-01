@@ -393,9 +393,3 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: status === 500 ? 'Server error. Please try again.' : err.message });
 });
 
-PORT = process.env.PORT || 5000;
-
-app.listen(process.env.PORT || 5000, '0.0.0.0', () => {
-  console.log(`Server is running perfectly!`);
-});
-
