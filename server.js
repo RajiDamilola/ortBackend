@@ -25,10 +25,10 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
-
 async function initDb() {
   const client = await pool.connect();
   try {
+    // 1. Create permanent system tables
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL, first_name TEXT, last_name TEXT, mobile TEXT, extra TEXT DEFAULT '{}',
@@ -44,6 +44,50 @@ async function initDb() {
     
     await client.query("INSERT INTO settings (key, value) VALUES ('whatsapp', '22961632589') ON CONFLICT DO NOTHING");
     await client.query("INSERT INTO settings (key, value) VALUES ('orders_email', 'orders@ortwatt.com') ON CONFLICT DO NOTHING");
+
+    // 2. Automated Seed: Fallback array seeding if tables are empty
+    const catCheck = await client.query('SELECT COUNT(*) AS count FROM categories');
+    if (parseInt(catCheck.rows[0].count) === 0) {
+      console.log('Seeding store categories into cloud engine...');
+      const defaultCategories = ['complete', 'panels', 'inverters', 'batteries', 'controllers'];
+      for (let i = 0; i < defaultCategories.length; i++) {
+        await client.query('INSERT INTO categories (slug, key, sort_order) VALUES ($1, $2, $3)', [defaultCategories[i], defaultCategories[i], i]);
+      }
+    }
+
+    const prodCheck = await client.query('SELECT COUNT(*) AS count FROM products');
+    if (parseInt(prodCheck.rows[0].count) === 0) {
+      const file = path.join(FRONTEND_DIR, 'data.js');
+      if (fs.existsSync(file)) {
+        console.log('Reading data.js to copy items to cloud storage...');
+        const noop = () => {};
+        const ctx = {
+          console, setTimeout, clearTimeout,
+          localStorage: { getItem: () => null, setItem: noop, removeItem: noop, key: () => null, length: 0 },
+          document: { addEventListener: noop, querySelector: () => null, querySelectorAll: () => [], getElementById: () => null, documentElement: { lang: 'en', setAttribute: noop } },
+          navigator: { language: 'en' }, location: { pathname: '/', search: '' }, addEventListener: noop,
+        };
+        ctx.window = ctx; ctx.self = ctx;
+        vm.createContext(ctx);
+        try {
+          vm.runInContext(fs.readFileSync(file, 'utf8') + '; this.__out = typeof ORT_PRODUCTS !== "undefined" ? ORT_PRODUCTS : [];', ctx, { timeout: 2000 });
+          const productsArray = ctx.__out;
+          if (Array.isArray(productsArray) && productsArray.length > 0) {
+            for (let i = 0; i < productsArray.length; i++) {
+              const p = productsArray[i];
+              if (p && p.slug) {
+                const cleanSlug = String(p.slug).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                await client.query('INSERT INTO products (slug, category, published, sort_order, data) VALUES ($1, $2, 1, $3, $4) ON CONFLICT DO NOTHING', 
+                  [cleanSlug, p.category || '', i, JSON.stringify(p)]);
+              }
+            }
+            console.log('Successfully seeded ' + productsArray.length + ' products into your cloud storage!');
+          }
+        } catch (e) {
+          console.warn('Could not parse file data for cloud database sync:', e.message);
+        }
+      }
+    }
   } finally {
     client.release();
   }
