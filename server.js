@@ -5,7 +5,7 @@ const fs = require('fs');
 const vm = require('vm');
 const crypto = require('crypto');
 const express = require('express');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
@@ -13,86 +13,52 @@ const multer = require('multer');
 // ---------- Config ----------
 const PORT = process.env.PORT || 3000;
 const FRONTEND_DIR = __dirname; 
-const DATA_DIR = path.resolve(__dirname, process.env.DATA_DIR || './data');
-const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
+const UPLOAD_DIR = path.join(__dirname, 'data', 'uploads');
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'default_admin_password_123';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_string';
 
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-// ---------- Database ----------
-const db = new Database(path.join(DATA_DIR, 'ort.db'));
-db.pragma('journal_mode = WAL');
-db.exec(`
-CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE COLLATE NOCASE NOT NULL,
-  password_hash TEXT NOT NULL, first_name TEXT, last_name TEXT, mobile TEXT, extra TEXT DEFAULT '{}',
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE IF NOT EXISTS categories (slug TEXT PRIMARY KEY, key TEXT NOT NULL, sort_order INTEGER DEFAULT 0);
-CREATE TABLE IF NOT EXISTS products (slug TEXT PRIMARY KEY, category TEXT, published INTEGER DEFAULT 1,
-  sort_order INTEGER DEFAULT 0, data TEXT NOT NULL, updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, status TEXT DEFAULT 'new',
-  user_id INTEGER, email TEXT, fields TEXT DEFAULT '{}', files TEXT DEFAULT '', admin_note TEXT DEFAULT '',
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
-`);
+// ---------- Cloud Database Configuration ----------
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
-const STATUSES = ['new', 'review', 'quoted', 'closed', 'expired'];
-const DEFAULT_CATEGORIES = ['complete', 'panels', 'inverters', 'batteries', 'controllers'];
-
-function loadFrontendData() {
-  const file = path.join(FRONTEND_DIR, 'data.js'); 
-  if (!fs.existsSync(file)) return {};
-  const noop = () => {};
-  const ctx = {
-    console, setTimeout, clearTimeout,
-    localStorage: { getItem: () => null, setItem: noop, removeItem: noop, key: () => null, length: 0 },
-    document: { addEventListener: noop, querySelector: () => null, querySelectorAll: () => [],
-      getElementById: () => null, documentElement: { lang: 'en', setAttribute: noop } },
-    navigator: { language: 'en' }, location: { pathname: '/', search: '' }, addEventListener: noop,
-  };
-  ctx.window = ctx; ctx.self = ctx;
-  vm.createContext(ctx);
+// Async initialization schema to configure cloud postgres tables permanently
+async function initDb() {
+  const client = await pool.connect();
   try {
-    vm.runInContext(fs.readFileSync(file, 'utf8') + `
-;this.__out = {
-  products: typeof ORT_PRODUCTS !== 'undefined' ? ORT_PRODUCTS : null,
-  categories: typeof ORT_CATEGORIES !== 'undefined' ? ORT_CATEGORIES : null,
-  whatsapp: typeof ORT_WHATSAPP !== 'undefined' ? ORT_WHATSAPP : null,
-  email: typeof ORT_ORDERS_EMAIL !== 'undefined' ? ORT_ORDERS_EMAIL : null };`, ctx, { timeout: 2000 });
-    return JSON.parse(JSON.stringify(ctx.__out));
-  } catch (e) {
-    console.warn('Could not read frontend data.js for seeding:', e.message);
-    return {};
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL, first_name TEXT, last_name TEXT, mobile TEXT, extra TEXT DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS categories (slug TEXT PRIMARY KEY, key TEXT NOT NULL, sort_order INTEGER DEFAULT 0);
+      CREATE TABLE IF NOT EXISTS products (slug TEXT PRIMARY KEY, category TEXT, published INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0, data TEXT NOT NULL, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS requests (id SERIAL PRIMARY KEY, kind TEXT, status TEXT DEFAULT 'new',
+        user_id INTEGER, email TEXT, fields TEXT DEFAULT '{}', files TEXT DEFAULT '', admin_note TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+    `);
+    
+    await client.query("INSERT INTO settings (key, value) VALUES ('whatsapp', '22961632589') ON CONFLICT DO NOTHING");
+    await client.query("INSERT INTO settings (key, value) VALUES ('orders_email', 'orders@ortwatt.com') ON CONFLICT DO NOTHING");
+  } finally {
+    client.release();
   }
 }
+initDb().catch(err => console.error('Cloud DB Initialization Error:', err));
 
-db.transaction(() => {
-  const fd = loadFrontendData();
-  if (db.prepare('SELECT COUNT(*) n FROM categories').get().n === 0) {
-    const ins = db.prepare('INSERT INTO categories (slug, key, sort_order) VALUES (?, ?, ?)');
-    const cats = Array.isArray(fd.categories) && fd.categories.every(c => c && c.slug)
-      ? fd.categories.map(c => [c.slug, c.key || c.slug])
-      : DEFAULT_CATEGORIES.map(s => [s, s]);
-    cats.forEach(([s, k], i) => ins.run(s, k, i));
-  }
-  if (db.prepare('SELECT COUNT(*) n FROM products').get().n === 0 && Array.isArray(fd.products)) {
-    const ins = db.prepare('INSERT INTO products (slug, category, published, sort_order, data) VALUES (?, ?, 1, ?, ?)');
-    fd.products.forEach((p, i) => p && p.slug && ins.run(p.slug, p.category || '', i, JSON.stringify(p)));
-    console.log(`Seeded ${fd.products ? fd.products.length : 0} products from frontend/data.js`);
-  }
-  const setDef = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
-  setDef.run('whatsapp', String(fd.whatsapp || '22961632589'));
-  setDef.run('orders_email', String(fd.email || 'orders@ortwatt.com'));
-})();
-
-// ---------- Helpers ----------
-const getSettings = () => Object.fromEntries(db.prepare('SELECT key, value FROM settings').all().map(r => [r.key, r.value]));
+// ---------- Helpers & Modified Database Wrappers ----------
+const getSettings = async () => {
+  const res = await pool.query('SELECT key, value FROM settings');
+  return Object.fromEntries(res.rows.map(r => [r.key, r.value]));
+};
 const rowToProduct = r => ({ ...JSON.parse(r.data), slug: r.slug, category: r.category });
-const publishedProducts = () =>
-  db.prepare('SELECT * FROM products WHERE published = 1 ORDER BY sort_order, rowid').all().map(rowToProduct);
 const httpErr = (status, message) => Object.assign(new Error(message), { status });
-const wrap = fn => (req, res, next) => { try { fn(req, res, next); } catch (e) { next(e); } };
+const wrap = fn => async (req, res, next) => { try { await fn(req, res, next); } catch (e) { next(e); } };
 const slugify = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 const sign = (payload, expiresIn) => jwt.sign(payload, JWT_SECRET, { expiresIn });
@@ -133,46 +99,45 @@ const sameSecret = (a, b) => {
   return crypto.timingSafeEqual(h(a), h(b));
 };
 
-function enrichCart(raw) {
+async function enrichCart(raw) {
   let list;
   try { list = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch { return null; }
   if (list && !Array.isArray(list) && typeof list === 'object') {
     list = Array.isArray(list.items) ? list.items : Object.entries(list).map(([slug, qty]) => ({ slug, qty }));
   }
   if (!Array.isArray(list)) return null;
-  const get = db.prepare('SELECT data FROM products WHERE slug = ?');
-  return list.map(it => {
+  
+  const enriched = [];
+  for (const it of list) {
     const slug = String(it.slug || it.id || '');
     const qty = Math.max(1, parseInt(it.qty || it.quantity || 1, 10) || 1);
-    const r = get.get(slug);
-    const p = r ? JSON.parse(r.data) : {};
+    const r = await pool.query('SELECT data FROM products WHERE slug = $1', [slug]);
+    const p = r.rows[0] ? JSON.parse(r.rows[0].data) : {};
     const ref = Number(p.referencePrice) || 0;
     const fee = Math.round(ref * (Number(p.feePercent ?? 10)) / 100);
-    return { slug, qty, brand: p.brand || '', model: p.model || '', referencePrice: ref, fee,
-      unit: ref + fee, total: (ref + fee) * qty };
-  });
+    enriched.push({ slug, qty, brand: p.brand || '', model: p.model || '', referencePrice: ref, fee,
+      unit: ref + fee, total: (ref + fee) * qty });
+  }
+  return enriched;
 }
 
-const expireOld = () => db.prepare(`UPDATE requests SET status = 'expired', updated_at = CURRENT_TIMESTAMP
-  WHERE status = 'quoted' AND updated_at < datetime('now', '-30 days')`).run();
-
-function formatRequest(r) {
-  return { id: r.id, kind: r.kind, status: r.status, user_id: r.user_id, email: r.email,
-    fields: JSON.parse(r.fields || '{}'), files: JSON.parse(r.files || '[]'), admin_note: r.admin_note,
-    created_at: r.created_at, updated_at: r.updated_at };
-}
-
-// ---------- App ----------
+// ---------- App Setup ----------
 const app = express();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve files directly out of the root folder, handling subfolder redirects
 app.use(express.static(__dirname));
 app.use('/js', express.static(__dirname));
 app.use('/css', express.static(__dirname));
+
+app.get(['/admin', '/admin/'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+
+app.get('*', (req, res, next) => { 
+  if (req.url.startsWith('/api') || req.url.includes('.')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 const formOnly = multer().none();
 const upload = multer({
@@ -184,197 +149,178 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024, files: 10 },
 });
 
-// ---------- Auth ----------
+// ---------- Auth Routes ----------
 app.post('/api/admin/uploads', requireAdmin, upload.single('image'), wrap((req, res) => {
   if (!req.file) throw httpErr(400, 'Choose an image to upload.');
   res.status(201).json({ filename: req.file.filename });
 }));
-app.post('/api/auth/register', formOnly, wrap((req, res) => {
+
+app.post('/api/auth/register', formOnly, wrap(async (req, res) => {
   const { email, password, first_name, last_name, mobile, ...rest } = req.body || {};
-  if (!email || !/\S+@\S+\.\S+$/.test(email)) throw httpErr(400, 'Please enter a valid email.');
+  if (!email || !/\s+@\s+\.\s+$/.test(email)) throw httpErr(400, 'Please enter a valid email.');
   if (!password || String(password).length < 6) throw httpErr(400, 'Password must be at least 6 characters.');
   Object.keys(rest).forEach(k => { if (/pass/i.test(k)) delete rest[k]; });
   try {
-    const info = db.prepare(`INSERT INTO users (email, password_hash, first_name, last_name, mobile, extra)
-      VALUES (?, ?, ?, ?, ?, ?)`).run(String(email).trim(), bcrypt.hashSync(String(password), 10),
-      first_name || '', last_name || '', mobile || '', JSON.stringify(rest));
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
-    res.json({ token: sign({ uid: user.id }, '30d'), user: publicUser(user) });
+    const query = `INSERT INTO users (email, password_hash, first_name, last_name, mobile, extra)
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
+    const info = await pool.query(query, [String(email).trim(), bcrypt.hashSync(String(password), 10),
+      first_name || '', last_name || '', mobile || '', JSON.stringify(rest)]);
+    const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [info.rows[0].id]);
+    res.json({ token: sign({ uid: userRes.rows[0].id }, '30d'), user: publicUser(userRes.rows[0]) });
   } catch (e) {
-    if (String(e.code).startsWith('SQLITE_CONSTRAINT')) throw httpErr(409, 'An account with this email already exists.');
+    if (e.code === '23505') throw httpErr(409, 'An account with this email already exists.');
     throw e;
   }
 }));
 
-app.post('/api/auth/login', formOnly, wrap((req, res) => {
+app.post('/api/auth/login', formOnly, wrap(async (req, res) => {
   if (limited(req)) throw httpErr(429, 'Too many attempts. Try again in 15 minutes.');
   const { email, password } = req.body || {};
-  const user = email && db.prepare('SELECT * FROM users WHERE email = ?').get(String(email).trim());
+  const userRes = await pool.query('SELECT * FROM users WHERE email = $1', [String(email || '').trim()]);
+  const user = userRes.rows[0];
   if (!user || !bcrypt.compareSync(String(password || ''), user.password_hash)) {
     throw httpErr(401, 'Wrong email or password.');
   }
   res.json({ token: sign({ uid: user.id }, '30d'), user: publicUser(user) });
 }));
 
-app.get('/api/auth/me', requireUser, wrap((req, res) => {
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.uid);
-  if (!user) throw httpErr(401, 'Account not found.');
-  res.json({ user: publicUser(user) });
+app.get('/api/auth/me', requireUser, wrap(async (req, res) => {
+  const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.uid]);
+  if (!userRes.rows[0]) throw httpErr(401, 'Account not found.');
+  res.json({ user: publicUser(userRes.rows[0]) });
 }));
 
-// ---------- Catalogue ----------
-app.get('/api/config', (req, res) => {
-  const s = getSettings();
+// ---------- Store Catalogue Routes ----------
+app.get('/api/config', wrap(async (req, res) => {
+  const s = await getSettings();
   res.json({ whatsapp: s.whatsapp, ordersEmail: s.orders_email });
-});
-app.get('/api/categories', (req, res) => {
-  res.json(db.prepare('SELECT slug, key FROM categories ORDER BY sort_order').all());
-});
-app.get('/api/products', (req, res) => {
+}));
+app.get('/api/categories', wrap(async (req, res) => {
+  const catRes = await pool.query('SELECT slug, key FROM categories ORDER BY sort_order');
+  res.json(catRes.rows);
+}));
+app.get('/api/products', wrap(async (req, res) => {
   const c = req.query.category;
-  const rows = c
-    ? db.prepare('SELECT * FROM products WHERE published = 1 AND category = ? ORDER BY sort_order, rowid').all(c)
-    : db.prepare('SELECT * FROM products WHERE published = 1 ORDER BY sort_order, rowid').all();
-  res.json(rows.map(rowToProduct));
-});
-app.get('/api/products/:slug', (req, res) => {
-  const r = db.prepare('SELECT * FROM products WHERE slug = ? AND published = 1').get(req.params.slug);
-  if (!r) return res.status(404).json({ error: 'Product not found.' });
-  res.json(rowToProduct(r));
-});
+  const q = c 
+    ? await pool.query('SELECT * FROM products WHERE published = 1 AND category = $1 ORDER BY sort_order', [c])
+    : await pool.query('SELECT * FROM products WHERE published = 1 ORDER BY sort_order');
+  res.json(q.rows.map(rowToProduct));
+}));
+app.get('/api/products/:slug', wrap(async (req, res) => {
+  const r = await pool.query('SELECT * FROM products WHERE slug = $1 AND published = 1', [req.params.slug]);
+  if (!r.rows[0]) return res.status(404).json({ error: 'Product not found.' });
+  res.json(rowToProduct(r.rows[0]));
+}));
 
-// ---------- Requests ----------
-app.post('/api/requests', upload.any(), wrap((req, res) => {
+// ---------- Requests Processing Routes ----------
+app.post('/api/requests', upload.any(), wrap(async (req, res) => {
   const fields = { ...(req.body || {}) };
   const kind = String(fields.kind || 'general').slice(0, 40);
   delete fields.kind;
   const raw = fields.cart ?? fields.items;
   if (raw !== undefined) {
-    const items = enrichCart(raw);
+    const items = await enrichCart(raw);
     delete fields.cart;
     if (items) fields.items = items; else fields.items_raw = raw;
   }
   const tok = readToken(req);
   const uid = tok && tok.uid ? tok.uid : null;
   let email = fields.email || null;
-  if (!email && uid) email = (db.prepare('SELECT email FROM users WHERE id = ?').get(uid) || {}).email || null;
-  const files = (req.files || []).map(f => ({ field: f.fieldname, name: f.originalname, stored: f.filename,
-    size: f.size, type: f.mimetype }));
-  const info = db.prepare('INSERT INTO requests (kind, user_id, email, fields, files) VALUES (?, ?, ?, ?, ?)')
-    .run(kind, uid, email, JSON.stringify(fields), JSON.stringify(files));
-  console.log(`New ${kind} request #${info.lastInsertRowid}`);
-  res.json({ success: true, id: info.lastInsertRowid });
+  if (!email && uid) {
+    const uRes = await pool.query('SELECT email FROM users WHERE id = $1', [uid]);
+    email = uRes.rows[0]?.email || null;
+  }
+  const files = (req.files || []).map(f => ({ field: f.fieldname, name: f.originalname, stored: f.filename, size: f.size, type: f.mimetype }));
+  const info = await pool.query('INSERT INTO requests (kind, user_id, email, fields, files) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+    [kind, uid, email, JSON.stringify(fields), JSON.stringify(files)]);
+  res.json({ success: true, id: info.rows[0].id });
 }));
 
-app.get('/api/requests/mine', requireUser, wrap((req, res) => {
-  expireOld();
-  const u = db.prepare('SELECT email FROM users WHERE id = ?').get(req.uid) || {};
-  const rows = db.prepare(`SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE) ORDER BY created_at DESC`).all(req.uid, u.email || '');
-  res.json(rows.map(r => {
-    const x = formatRequest(r);
-    return { id: x.id, kind: x.kind, status: x.status, created_at: x.created_at, updated_at: x.updated_at,
-      note: x.admin_note, ...x.fields };
+app.get('/api/requests/mine', requireUser, wrap(async (req, res) => {
+  const u = await pool.query('SELECT email FROM users WHERE id = $1', [req.uid]);
+  const userEmail = u.rows[0]?.email || '';
+  const rows = await pool.query('SELECT * FROM requests WHERE user_id = $1 OR (email IS NOT NULL AND email = $2) ORDER BY created_at DESC', [req.uid, userEmail]);
+  res.json(rows.rows.map(r => {
+    return { id: r.id, kind: r.kind, status: r.status, created_at: r.created_at, updated_at: r.updated_at, note: r.admin_note, ...JSON.parse(r.fields || '{}') };
   }));
 }));
 
-// ---------- Admin ----------
+// ---------- Administrative Operational Routes ----------
 app.post('/api/admin/login', formOnly, wrap((req, res) => {
   if (limited(req)) throw httpErr(429, 'Too many attempts. Try again in 15 minutes.');
   if (!sameSecret(req.body?.password || '', ADMIN_PASSWORD)) throw httpErr(401, 'Wrong admin password.');
   res.json({ token: sign({ role: 'admin' }, '12h') });
 }));
-app.get('/api/admin/dashboard', requireAdmin, wrap((req, res) => {
-  expireOld();
-  res.json({ products: db.prepare('SELECT * FROM products ORDER BY sort_order, rowid').all().map(r => ({ ...rowToProduct(r), published: !!r.published, sort_order: r.sort_order })),
-    requests: db.prepare('SELECT * FROM requests ORDER BY created_at DESC, id DESC').all().map(formatRequest),
-    categories: db.prepare('SELECT slug, key FROM categories ORDER BY sort_order').all(), settings: getSettings() });
+
+app.get('/api/admin/dashboard', requireAdmin, wrap(async (req, res) => {
+  const prodRes = await pool.query('SELECT * FROM products ORDER BY sort_order');
+  const reqRes = await pool.query('SELECT * FROM requests ORDER BY created_at DESC');
+  const catRes = await pool.query('SELECT slug, key FROM categories ORDER BY sort_order');
+  const settings = await getSettings();
+  res.json({ 
+    products: prodRes.rows.map(r => ({ ...rowToProduct(r), published: !!r.published, sort_order: r.sort_order })),
+    requests: reqRes.rows.map(r => ({ id: r.id, kind: r.kind, status: r.status, user_id: r.user_id, email: r.email, fields: JSON.parse(r.fields || '{}'), files: JSON.parse(r.files || '[]'), admin_note: r.admin_note, created_at: r.created_at, updated_at: r.updated_at })),
+    categories: catRes.rows, settings 
+  });
 }));
-app.post('/api/admin/products', requireAdmin, wrap((req, res) => {
+
+app.post('/api/admin/products', requireAdmin, wrap(async (req, res) => {
   const p = req.body || {};
   const slug = slugify(p.slug || `${p.brand || ''}-${p.model || ''}`);
   if (!slug || !p.brand || !p.model || !p.category) throw httpErr(400, 'Slug, brand, model and category are required.');
-  if (!db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(p.category)) throw httpErr(400, 'Unknown category.');
-  if (db.prepare('SELECT 1 FROM products WHERE slug = ?').get(slug)) throw httpErr(409, 'Slug already exists.');
+  const catCheck = await pool.query('SELECT 1 FROM categories WHERE slug = $1', [p.category]);
+  if (catCheck.rowCount === 0) throw httpErr(400, 'Unknown category.');
+  const slugCheck = await pool.query('SELECT 1 FROM products WHERE slug = $1', [slug]);
+  if (slugCheck.rowCount > 0) throw httpErr(409, 'Slug already exists.');
   const { published, sort_order, ...data } = p;
   data.slug = slug;
-  db.prepare('INSERT INTO products (slug, category, published, sort_order, data) VALUES (?, ?, ?, ?, ?)')
-    .run(slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data));
+  await pool.query('INSERT INTO products (slug, category, published, sort_order, data) VALUES ($1, $2, $3, $4, $5)',
+    [slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data)]);
   res.status(201).json({ slug });
 }));
-app.put('/api/admin/products/:slug', requireAdmin, wrap((req, res) => {
-  const old = db.prepare('SELECT * FROM products WHERE slug = ?').get(req.params.slug);
-  if (!old) throw httpErr(404, 'Product not found.');
-  const p = req.body || {}, slug = slugify(p.slug || old.slug);
-  if (!slug || !p.brand || !p.model || !p.category) throw httpErr(400, 'Slug, brand, model and category are required.');
-  if (!db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(p.category)) throw httpErr(400, 'Unknown category.');
+
+app.put('/api/admin/products/:slug', requireAdmin, wrap(async (req, res) => {
+  const oldCheck = await pool.query('SELECT * FROM products WHERE slug = $1', [req.params.slug]);
+  if (oldCheck.rowCount === 0) throw httpErr(404, 'Product not found.');
+  const p = req.body || {}, slug = slugify(p.slug || oldCheck.rows[0].slug);
   const { published, sort_order, ...data } = p;
   data.slug = slug;
-  db.prepare('UPDATE products SET slug = ?, category = ?, published = ?, sort_order = ?, data = ?, updated_at = CURRENT_TIMESTAMP WHERE slug = ?')
-    .run(slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data), old.slug);
+  await pool.query('UPDATE products SET slug = $1, category = $2, published = $3, sort_order = $4, data = $5, updated_at = CURRENT_TIMESTAMP WHERE slug = $6',
+    [slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data), req.params.slug]);
   res.json({ slug });
 }));
-app.delete('/api/admin/products/:slug', requireAdmin, wrap((req, res) => {
-  const info = db.prepare('DELETE FROM products WHERE slug = ?').run(req.params.slug);
-  if (!info.changes) throw httpErr(404, 'Product not found.');
+
+app.delete('/api/admin/products/:slug', requireAdmin, wrap(async (req, res) => {
+  const info = await pool.query('DELETE FROM products WHERE slug = $1', [req.params.slug]);
+  if (info.rowCount === 0) throw httpErr(404, 'Product not found.');
   res.json({ success: true });
 }));
-app.put('/api/admin/settings', requireAdmin, wrap((req, res) => {
+
+app.put('/api/admin/settings', requireAdmin, wrap(async (req, res) => {
   const { whatsapp, orders_email } = req.body || {};
   if (!/^\+?[0-9]{8,18}$/.test(String(whatsapp || ''))) throw httpErr(400, 'Enter a valid WhatsApp number (digits only).');
   if (!/^\S+@\S+\.\S+$/.test(String(orders_email || ''))) throw httpErr(400, 'Enter a valid orders email.');
-  db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(whatsapp, 'whatsapp');
-  db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(orders_email, 'orders_email');
+  await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [whatsapp, 'whatsapp']);
+  await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [orders_email, 'orders_email']);
   res.json({ success: true });
 }));
-app.patch('/api/admin/requests/:id', requireAdmin, wrap((req, res) => {
+
+app.patch('/api/admin/requests/:id', requireAdmin, wrap(async (req, res) => {
   const { status, admin_note } = req.body || {};
-  if (!STATUSES.includes(status)) throw httpErr(400, 'Invalid status.');
-  const info = db.prepare('UPDATE requests SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-    .run(status, String(admin_note || '').slice(0, 5000), req.params.id);
-  if (!info.changes) throw httpErr(404, 'Request not found.');
+  const info = await pool.query('UPDATE requests SET status = $1, admin_note = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+    [status, String(admin_note || '').slice(0, 5000), req.params.id]);
+  if (info.rowCount === 0) throw httpErr(404, 'Request not found.');
   res.json({ success: true });
 }));
-app.get('/api/admin/uploads/:name', requireAdmin, wrap((req, res) => {
-  if (!/^[a-f0-9]{24}(\.[a-z0-9]{1,9})?$/.test(req.params.name)) throw httpErr(400, 'Invalid filename.');
-  res.sendFile(path.join(UPLOAD_DIR, req.params.name));
-}));
 
-// ---------- Frontend live seeding ----------
-app.get('/js/data.js', (req, res, next) => {
-  const file = path.join(FRONTEND_DIR, 'data.js');
-  if (!fs.existsSync(file)) return next();
-  const s = getSettings();
-  let src = fs.readFileSync(file, 'utf8')
-    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
-    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
-  src += `
-;(function(){ try { var P = \${JSON.stringify(publishedProducts())}; if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); } } catch (e) {} try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch; window.fetch = function (u, o) { try { if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } } } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {} })();
-`;
-  res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
-});
-
-app.get(['/admin', '/admin/'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
 
-app.get('/uploads/:name', (req, res) => {
-  if (!/^[a-f0-9]{24}(\.[a-z0-9]{1,9})?$/.test(req.params.name)) {
-    return res.status(404).end();
-  }
-  res.sendFile(path.join(UPLOAD_DIR, req.params.name));
-});
-app.use(express.static(FRONTEND_DIR, { extensions: ['html'] }));
-app.use((req, res) => {
-  const nf = path.join(FRONTEND_DIR, '404.html');
-  if (fs.existsSync(nf)) return res.status(404).sendFile(nf);
-  res.status(404).send('Page not found');
-});
-
 app.use((err, req, res, next) => {
-  const status = err.status || (err instanceof multer.MulterError ? 400 : 500);
+  const status = err.status || 500;
   if (status === 500) console.error(err);
   res.status(status).json({ error: status === 500 ? 'Server error. Please try again.' : err.message });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server started successfully on port ${PORT}`);
+  console.log(`Server cloud engine running smoothly on port ${PORT}`);
 });
