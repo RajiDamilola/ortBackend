@@ -400,7 +400,8 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: status === 500 ? 'Server error. Please try again.' : err.message });
 });
 
-app.listen(PORT, () => {
-  console.log(`ORT running on http://localhost:${PORT}  (admin: /admin)`);
-  console.log(`Serving frontend from ${FRONTEND_DIR}`);
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running perfectly on port ${PORT}`);
 });
