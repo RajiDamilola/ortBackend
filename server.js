@@ -151,7 +151,7 @@ app.post('/api/admin/uploads', requireAdmin, upload.single('image'), wrap((req, 
 
 app.post('/api/auth/register', formOnly, wrap(async (req, res) => {
   const { email, password, first_name, last_name, mobile, ...rest } = req.body || {};
-  if (!email || !/\s+@\s+\.\s+/.test(email)) throw httpErr(400, 'Please enter a valid email.');
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) throw httpErr(400, 'Please enter a valid email.');
   if (!password || String(password).length < 6) throw httpErr(400, 'Password must be at least 6 characters.');
   Object.keys(rest).forEach(k => { if (/pass/i.test(k)) delete rest[k]; });
   try {
@@ -180,7 +180,7 @@ app.post('/api/auth/login', formOnly, wrap(async (req, res) => {
 
 app.get('/api/auth/me', requireUser, wrap(async (req, res) => {
   const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.uid]);
-  if (!userRes.rows[0]) throw httpErr(401, 'Account not found.');
+  if (userRes.rows.length === 0) throw httpErr(401, 'Account not found.');
   res.json({ user: publicUser(userRes.rows[0]) });
 }));
 
@@ -202,7 +202,7 @@ app.get('/api/products', wrap(async (req, res) => {
 }));
 app.get('/api/products/:slug', wrap(async (req, res) => {
   const r = await pool.query('SELECT * FROM products WHERE slug = $1 AND published = 1', [req.params.slug]);
-  if (!r.rows[0]) return res.status(404).json({ error: 'Product not found.' });
+  if (r.rows.length === 0) return res.status(404).json({ error: 'Product not found.' });
   res.json(rowToProduct(r.rows[0]));
 }));
 
@@ -253,7 +253,7 @@ app.get('/api/admin/dashboard', requireAdmin, wrap(async (req, res) => {
   const settings = await getSettings();
   res.json({
     products: prodRes.rows.map(r => ({ ...rowToProduct(r), published: !!r.published, sort_order: r.sort_order })),
-    requests: reqRes.rows.map(r => ({ id: r.id, kind: r.kind, status: r.status, user_id: r.user_id, email: r.email, fields: JSON.parse(r.fields || '{}'), files: JSON.parse(r.files || '[]'), admin_note: r.admin_note, created_at: r.created_at, updated_at: r.updated_at })),
+    requests: reqRes.rows.map(r => ({ id: r.id, kind: r.kind, status: r.status, user_id: r.user_id, email: r.email, fields: JSON.parse(r.fields || '{}'), files: JSON.parse(r.files || '{}'), admin_note: r.admin_note, created_at: r.created_at, updated_at: r.updated_at })),
     categories: catRes.rows, settings
   });
 }));
@@ -318,6 +318,7 @@ app.get('/js/data.js', wrap(async (req, res, next) => {
   let src = fs.readFileSync(file, 'utf8')
     .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
     .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
+    
   src += `
 ;(function(){
   try { var P = \${JSON.stringify(activeProducts)};
