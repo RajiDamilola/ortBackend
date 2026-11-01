@@ -169,11 +169,6 @@ function formatRequest(r) {
 
 // ---------- App ----------
 const app = express();
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 app.options('*', cors());
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
