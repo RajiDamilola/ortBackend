@@ -89,7 +89,7 @@ function publicUser(u) {
 const attempts = new Map();
 function limited(req) {
   const key = req.ip + req.path, now = Date.now();
-  const list = (attempts.get(key) ||).filter(t => now - t < 15 * 60 * 1000);
+  const list = (attempts.get(key) || []).filter(t => now - t < 15 * 60 * 1000);
   list.push(now); attempts.set(key, list);
   return list.length > 10;
 }
