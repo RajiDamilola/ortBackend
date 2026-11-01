@@ -5,6 +5,7 @@ const fs = require('fs');
 const vm = require('vm');
 const crypto = require('crypto');
 const express = require('express');
+const cors = require('cors');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -169,6 +170,7 @@ function formatRequest(r) {
 
 // ---------- App ----------
 const app = express();
+app.use(cors());
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
