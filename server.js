@@ -289,7 +289,7 @@ res.json({ success: true });
 }));
 app.put('/api/admin/settings', requireAdmin, wrap(async (req, res) => {
 const { whatsapp, orders_email } = req.body || {};
-if (!/^+?[0-9]{8,18}$/.test(String(whatsapp || ''))) throw httpErr(400, 'Enter a valid WhatsApp number (digits only).');
+if (!/^\+?[0-9]{8,18}$/.test(String(whatsapp || ''))) throw httpErr(400, 'Enter a valid WhatsApp number (digits only).');
 if (!/^\S+@\S+.\S+$/.test(String(orders_email || ''))) throw httpErr(400, 'Enter a valid orders email.');
 await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [whatsapp, 'whatsapp']);
 await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [orders_email, 'orders_email']);
