@@ -89,7 +89,7 @@ function publicUser(u) {
 const attempts = new Map();
 function limited(req) {
   const key = req.ip + req.path, now = Date.now();
-  const list = (attempts.get(key) || []).filter(t => now - t < 15 * 60 * 1000);
+  const list = (attempts.get(key) ||).filter(t => now - t < 15 * 60 * 1000);
   list.push(now); attempts.set(key, list);
   return list.length > 10;
 }
@@ -106,7 +106,7 @@ async function enrichCart(raw) {
   }
   if (!Array.isArray(list)) return null;
   
-  const enriched = [];
+  const enriched =;
   for (const it of list) {
     const slug = String(it.slug || it.id || '');
     const qty = Math.max(1, parseInt(it.qty || it.quantity || 1, 10) || 1);
@@ -220,126 +220,101 @@ app.post('/api/requests', upload.any(), wrap(async (req, res) => {
   const tok = readToken(req);
   const uid = tok && tok.uid ? tok.uid : null;
   let email = fields.email || null;
-  if (!email && uid) {
-    const uRes = await pool.query('SELECT email FROM users WHERE id = $1', [uid]);
-    email = uRes.rows[0]?.email || null;
-  }
-  const files = (req.files || []).map(f => ({ field: f.fieldname, name: f.originalname, stored: f.filename, size: f.size, type: f.mimetype }));
-  const info = await pool.query('INSERT INTO requests (kind, user_id, email, fields, files) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-    [kind, uid, email, JSON.stringify(fields), JSON.stringify(files)]);
-  res.json({ success: true, id: info.rows[0].id });
+if (!email && uid) {
+const uRes = await pool.query('SELECT email FROM users WHERE id = $1', [uid]);
+email = uRes.rows[0]?.email || null;
+}
+const files = (req.files ||).map(f => ({ field: f.fieldname, name: f.originalname, stored: f.filename, size: f.size, type: f.mimetype }));
+const info = await pool.query('INSERT INTO requests (kind, user_id, email, fields, files) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+[kind, uid, email, JSON.stringify(fields), JSON.stringify(files)]);
+res.json({ success: true, id: info.rows[0].id });
 }));
-
 app.get('/api/requests/mine', requireUser, wrap(async (req, res) => {
-  const u = await pool.query('SELECT email FROM users WHERE id = $1', [req.uid]);
-  const userEmail = u.rows[0]?.email || '';
-  const rows = await pool.query('SELECT * FROM requests WHERE user_id = $1 OR (email IS NOT NULL AND email = $2) ORDER BY created_at DESC', [req.uid, userEmail]);
-  res.json(rows.rows.map(r => {
-    return { id: r.id, kind: r.kind, status: r.status, created_at: r.created_at, updated_at: r.updated_at, note: r.admin_note, ...JSON.parse(r.fields || '{}') };
-  }));
+const u = await pool.query('SELECT email FROM users WHERE id = $1', [req.uid]);
+const userEmail = u.rows[0]?.email || '';
+const rows = await pool.query('SELECT * FROM requests WHERE user_id = $1 OR (email IS NOT NULL AND email = $2) ORDER BY created_at DESC', [req.uid, userEmail]);
+res.json(rows.rows.map(r => {
+return { id: r.id, kind: r.kind, status: r.status, created_at: r.created_at, updated_at: r.updated_at, note: r.admin_note, ...JSON.parse(r.fields || '{}') };
 }));
-
+}));
 // ---------- Administrative Operational Routes ----------
 app.post('/api/admin/login', formOnly, wrap((req, res) => {
-  if (limited(req)) throw httpErr(429, 'Too many attempts. Try again in 15 minutes.');
-  if (!sameSecret(req.body?.password || '', ADMIN_PASSWORD)) throw httpErr(401, 'Wrong admin password.');
-  res.json({ token: sign({ role: 'admin' }, '12h') });
+if (limited(req)) throw httpErr(429, 'Too many attempts. Try again in 15 minutes.');
+if (!sameSecret(req.body?.password || '', ADMIN_PASSWORD)) throw httpErr(401, 'Wrong admin password.');
+res.json({ token: sign({ role: 'admin' }, '12h') });
 }));
-
 app.get('/api/admin/dashboard', requireAdmin, wrap(async (req, res) => {
-  const prodRes = await pool.query('SELECT * FROM products ORDER BY sort_order');
-  const reqRes = await pool.query('SELECT * FROM requests ORDER BY created_at DESC');
-  const catRes = await pool.query('SELECT slug, key FROM categories ORDER BY sort_order');
-  const settings = await getSettings();
-  res.json({
-    products: prodRes.rows.map(r => ({ ...rowToProduct(r), published: !!r.published, sort_order: r.sort_order })),
-    requests: reqRes.rows.map(r => ({ id: r.id, kind: r.kind, status: r.status, user_id: r.user_id, email: r.email, fields: JSON.parse(r.fields || '{}'), files: JSON.parse(r.files || '{}'), admin_note: r.admin_note, created_at: r.created_at, updated_at: r.updated_at })),
-    categories: catRes.rows, settings
-  });
+const prodRes = await pool.query('SELECT * FROM products ORDER BY sort_order');
+const reqRes = await pool.query('SELECT * FROM requests ORDER BY created_at DESC');
+const catRes = await pool.query('SELECT slug, key FROM categories ORDER BY sort_order');
+const settings = await getSettings();
+res.json({
+products: prodRes.rows.map(r => ({ ...rowToProduct(r), published: !!r.published, sort_order: r.sort_order })),
+requests: reqRes.rows.map(r => ({ id: r.id, kind: r.kind, status: r.status, user_id: r.user_id, email: r.email, fields: JSON.parse(r.fields || '{}'), files: JSON.parse(r.files || '{}'), admin_note: r.admin_note, created_at: r.created_at, updated_at: r.updated_at })),
+categories: catRes.rows, settings
+});
 }));
-
 app.post('/api/admin/products', requireAdmin, wrap(async (req, res) => {
-  const p = req.body || {};
-  const slug = slugify(p.slug || `${p.brand || ''}-${p.model || ''}`);
-  if (!slug || !p.brand || !p.model || !p.category) throw httpErr(400, 'Slug, brand, model and category are required.');
-  const catCheck = await pool.query('SELECT 1 FROM categories WHERE slug = $1', [p.category]);
-  if (catCheck.rowCount === 0) throw httpErr(400, 'Unknown category.');
-  const slugCheck = await pool.query('SELECT 1 FROM products WHERE slug = $1', [slug]);
-  if (slugCheck.rowCount > 0) throw httpErr(409, 'Slug already exists.');
-  const { published, sort_order, ...data } = p;
-  data.slug = slug;
-  await pool.query('INSERT INTO products (slug, category, published, sort_order, data) VALUES ($1, $2, $3, $4, $5)',
-    [slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data)]);
-  res.status(201).json({ slug });
+const p = req.body || {};
+const slug = slugify(p.slug || ${p.brand || ''}-${p.model || ''});
+if (!slug || !p.brand || !p.model || !p.category) throw httpErr(400, 'Slug, brand, model and category are required.');
+const catCheck = await pool.query('SELECT 1 FROM categories WHERE slug = $1', [p.category]);
+if (catCheck.rowCount === 0) throw httpErr(400, 'Unknown category.');
+const slugCheck = await pool.query('SELECT 1 FROM products WHERE slug = $1', [slug]);
+if (slugCheck.rowCount > 0) throw httpErr(409, 'Slug already exists.');
+const { published, sort_order, ...data } = p;
+data.slug = slug;
+await pool.query('INSERT INTO products (slug, category, published, sort_order, data) VALUES ($1, $2, $3, $4, $5)',
+[slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data)]);
+res.status(201).json({ slug });
 }));
-
 app.put('/api/admin/products/:slug', requireAdmin, wrap(async (req, res) => {
-  const oldCheck = await pool.query('SELECT * FROM products WHERE slug = $1', [req.params.slug]);
-  if (oldCheck.rowCount === 0) throw httpErr(404, 'Product not found.');
-  const p = req.body || {}, slug = slugify(p.slug || oldCheck.rows[0].slug);
-  const { published, sort_order, ...data } = p;
-  data.slug = slug;
-  await pool.query('UPDATE products SET slug = $1, category = $2, published = $3, sort_order = $4, data = $5, updated_at = CURRENT_TIMESTAMP WHERE slug = $6',
-    [slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data), req.params.slug]);
-  res.json({ slug });
+const oldCheck = await pool.query('SELECT * FROM products WHERE slug = $1', [req.params.slug]);
+if (oldCheck.rowCount === 0) throw httpErr(404, 'Product not found.');
+const p = req.body || {}, slug = slugify(p.slug || oldCheck.rows[0].slug);
+const { published, sort_order, ...data } = p;
+data.slug = slug;
+await pool.query('UPDATE products SET slug = $1, category = $2, published = $3, sort_order = $4, data = $5, updated_at = CURRENT_TIMESTAMP WHERE slug = $6',
+[slug, p.category, published === false ? 0 : 1, Number(sort_order) || 0, JSON.stringify(data), req.params.slug]);
+res.json({ slug });
 }));
-
 app.delete('/api/admin/products/:slug', requireAdmin, wrap(async (req, res) => {
-  const info = await pool.query('DELETE FROM products WHERE slug = $1', [req.params.slug]);
-  if (info.rowCount === 0) throw httpErr(404, 'Product not found.');
-  res.json({ success: true });
+const info = await pool.query('DELETE FROM products WHERE slug = $1', [req.params.slug]);
+if (info.rowCount === 0) throw httpErr(404, 'Product not found.');
+res.json({ success: true });
 }));
-
 app.put('/api/admin/settings', requireAdmin, wrap(async (req, res) => {
-  const { whatsapp, orders_email } = req.body || {};
-  if (!/^\+?[0-9]{8,18}$/.test(String(whatsapp || ''))) throw httpErr(400, 'Enter a valid WhatsApp number (digits only).');
-  if (!/^\S+@\S+\.\S+$/.test(String(orders_email || ''))) throw httpErr(400, 'Enter a valid orders email.');
-  await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [whatsapp, 'whatsapp']);
-  await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [orders_email, 'orders_email']);
-  res.json({ success: true });
+const { whatsapp, orders_email } = req.body || {};
+if (!/^+?[0-9]{8,18}$/.test(String(whatsapp || ''))) throw httpErr(400, 'Enter a valid WhatsApp number (digits only).');
+if (!/^\S+@\S+.\S+$/.test(String(orders_email || ''))) throw httpErr(400, 'Enter a valid orders email.');
+await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [whatsapp, 'whatsapp']);
+await pool.query('UPDATE settings SET value = $1 WHERE key = $2', [orders_email, 'orders_email']);
+res.json({ success: true });
 }));
-
 app.patch('/api/admin/requests/:id', requireAdmin, wrap(async (req, res) => {
-  const { status, admin_note } = req.body || {};
-  const info = await pool.query('UPDATE requests SET status = $1, admin_note = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
-    [status, String(admin_note || '').slice(0, 5000), req.params.id]);
-  if (info.rowCount === 0) throw httpErr(404, 'Request not found.');
-  res.json({ success: true });
+const { status, admin_note } = req.body || {};
+const info = await pool.query('UPDATE requests SET status = $1, admin_note = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+[status, String(admin_note || '').slice(0, 5000), req.params.id]);
+if (info.rowCount === 0) throw httpErr(404, 'Request not found.');
+res.json({ success: true });
 }));
-
 // ---------- Frontend live seeding ----------
 app.get('/js/data.js', wrap(async (req, res, next) => {
-  const file = path.join(FRONTEND_DIR, 'data.js');
-  if (!fs.existsSync(file)) return next();
-  const s = await getSettings();
-  const prodRes = await pool.query('SELECT * FROM products WHERE published = 1 ORDER BY sort_order');
-  const activeProducts = prodRes.rows.map(rowToProduct);
-
-  let src = fs.readFileSync(file, 'utf8')
-    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
-    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
-    
-  src += `
-;(function(){
-  try { var P = \${JSON.stringify(activeProducts)};
-    if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); }
-  } catch (e) {}
-  try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch;
-    window.fetch = function (u, o) { try {
-      if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) {
-        for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);
-          if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } }
-    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}
-})();
-`;
-  res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
+const file = path.join(FRONTEND_DIR, 'data.js');
+if (!fs.existsSync(file)) return next();
+const s = await getSettings();
+const prodRes = await pool.query('SELECT * FROM products WHERE published = 1 ORDER BY sort_order');
+const activeProducts = prodRes.rows.map(rowToProduct);
+let src = fs.readFileSync(file, 'utf8')
+.replace(/(ORT_WHATSAPP\s*=\s*)(['"])[^'"]\2/, (m, a) => a + JSON.stringify(s.whatsapp))
+.replace(/(ORT_ORDERS_EMAIL\s=\s*)(['"])[^'"]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
+src += ;(function(){ try { var P = ${JSON.stringify(activeProducts)}; if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); } } catch (e) {} try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch; window.fetch = function (u, o) { try { if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } } } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {} })();;
+res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
 }));
-
-app.get('*', (req, res, next) => { 
-  if (req.url.startsWith('/api') || req.url.includes('.')) return next();
-  res.sendFile(path.join(__dirname, 'index.html'));
+app.get('*', (req, res, next) => {
+if (req.url.startsWith('/api') || req.url.includes('.')) return next();
+res.sendFile(path.join(__dirname, 'index.html'));
 });
-
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(\`Server cloud engine running smoothly on port \${PORT}\`);
+console.log(Server started successfully on port ${PORT});
 });
