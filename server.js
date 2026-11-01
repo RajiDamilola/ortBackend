@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS categories (slug TEXT PRIMARY KEY, key TEXT NOT NULL,
 CREATE TABLE IF NOT EXISTS products (slug TEXT PRIMARY KEY, category TEXT, published INTEGER DEFAULT 1,
   sort_order INTEGER DEFAULT 0, data TEXT NOT NULL, updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, status TEXT DEFAULT 'new',
-  user_id INTEGER, email TEXT, fields TEXT DEFAULT '{}', files TEXT DEFAULT '', admin_note TEXT DEFAULT '',
+  user_id INTEGER, email TEXT, fields TEXT DEFAULT '{}', files TEXT DEFAULT '[]', admin_note TEXT DEFAULT '',
   created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 `);
@@ -171,10 +171,14 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// FIXED STATIC ASSET ROUTING AND CATCH-ALL PRIORITIZATION
 app.use(express.static(__dirname));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+
 app.get('*', (req, res, next) => { 
-  if (req.url.startsWith('/api')) return next();
-  res.sendFile(__dirname + '/index.html');
+  if (req.url.startsWith('/api') || req.url.includes('.')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const formOnly = multer().none();
@@ -272,7 +276,8 @@ app.post('/api/requests', upload.any(), wrap((req, res) => {
 app.get('/api/requests/mine', requireUser, wrap((req, res) => {
   expireOld();
   const u = db.prepare('SELECT email FROM users WHERE id = ?').get(req.uid) || {};
-  const rows = db.prepare(`SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE) ORDER BY created_at DESC`).all(req.uid, u.email || '');
+  const rows = db.prepare(`SELECT * FROM requests WHERE user_id = ? OR (email IS NOT NULL AND email = ? COLLATE NOCASE)
+    ORDER BY created_at DESC`).all(req.uid, u.email || '');
   res.json(rows.map(r => {
     const x = formatRequest(r);
     return { id: x.id, kind: x.kind, status: x.status, created_at: x.created_at, updated_at: x.updated_at,
@@ -348,10 +353,21 @@ app.get('/js/data.js', (req, res, next) => {
   if (!fs.existsSync(file)) return next();
   const s = getSettings();
   let src = fs.readFileSync(file, 'utf8')
-    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*/, (m, a) => a + JSON.stringify(s.whatsapp))
-    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*/, (m, a) => a + JSON.stringify(s.orders_email));
+    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
+    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
   src += `
-;(function(){ try { var P = ${JSON.stringify(publishedProducts())}; if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); } } catch (e) {} try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch; window.fetch = function (u, o) { try { if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } } } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {} })();`;
+;(function(){
+  try { var P = ${JSON.stringify(publishedProducts())};
+    if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); }
+  } catch (e) {}
+  try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch;
+    window.fetch = function (u, o) { try {
+      if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) {
+        for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);
+          if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } }
+    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}
+})();
+`;
   res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
 });
 
@@ -377,6 +393,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: status === 500 ? 'Server error. Please try again.' : err.message });
 });
 
+// Final bound server initiation block safely referencing the PORT constant
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server started successfully on port ${PORT}`);
 });
