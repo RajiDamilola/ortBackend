@@ -26,7 +26,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Async initialization schema to configure cloud postgres tables permanently
 async function initDb() {
   const client = await pool.connect();
   try {
@@ -51,7 +50,7 @@ async function initDb() {
 }
 initDb().catch(err => console.error('Cloud DB Initialization Error:', err));
 
-// ---------- Helpers & Modified Database Wrappers ----------
+// ---------- Helpers & Database Wrappers ----------
 const getSettings = async () => {
   const res = await pool.query('SELECT key, value FROM settings');
   return Object.fromEntries(res.rows.map(r => [r.key, r.value]));
@@ -134,11 +133,6 @@ app.use('/css', express.static(__dirname));
 
 app.get(['/admin', '/admin/'], (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
-app.get('*', (req, res, next) => { 
-  if (req.url.startsWith('/api') || req.url.includes('.')) return next();
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
 const formOnly = multer().none();
 const upload = multer({
   storage: multer.diskStorage({
@@ -157,7 +151,7 @@ app.post('/api/admin/uploads', requireAdmin, upload.single('image'), wrap((req, 
 
 app.post('/api/auth/register', formOnly, wrap(async (req, res) => {
   const { email, password, first_name, last_name, mobile, ...rest } = req.body || {};
-  if (!email || !/\s+@\s+\.\s+$/.test(email)) throw httpErr(400, 'Please enter a valid email.');
+  if (!email || !/\s+@\s+\.\s+/.test(email)) throw httpErr(400, 'Please enter a valid email.');
   if (!password || String(password).length < 6) throw httpErr(400, 'Password must be at least 6 characters.');
   Object.keys(rest).forEach(k => { if (/pass/i.test(k)) delete rest[k]; });
   try {
@@ -257,10 +251,10 @@ app.get('/api/admin/dashboard', requireAdmin, wrap(async (req, res) => {
   const reqRes = await pool.query('SELECT * FROM requests ORDER BY created_at DESC');
   const catRes = await pool.query('SELECT slug, key FROM categories ORDER BY sort_order');
   const settings = await getSettings();
-  res.json({ 
+  res.json({
     products: prodRes.rows.map(r => ({ ...rowToProduct(r), published: !!r.published, sort_order: r.sort_order })),
     requests: reqRes.rows.map(r => ({ id: r.id, kind: r.kind, status: r.status, user_id: r.user_id, email: r.email, fields: JSON.parse(r.fields || '{}'), files: JSON.parse(r.files || '[]'), admin_note: r.admin_note, created_at: r.created_at, updated_at: r.updated_at })),
-    categories: catRes.rows, settings 
+    categories: catRes.rows, settings
   });
 }));
 
@@ -313,14 +307,38 @@ app.patch('/api/admin/requests/:id', requireAdmin, wrap(async (req, res) => {
   res.json({ success: true });
 }));
 
-app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
+// ---------- Frontend live seeding ----------
+app.get('/js/data.js', wrap(async (req, res, next) => {
+  const file = path.join(FRONTEND_DIR, 'data.js');
+  if (!fs.existsSync(file)) return next();
+  const s = await getSettings();
+  const prodRes = await pool.query('SELECT * FROM products WHERE published = 1 ORDER BY sort_order');
+  const activeProducts = prodRes.rows.map(rowToProduct);
 
-app.use((err, req, res, next) => {
-  const status = err.status || 500;
-  if (status === 500) console.error(err);
-  res.status(status).json({ error: status === 500 ? 'Server error. Please try again.' : err.message });
+  let src = fs.readFileSync(file, 'utf8')
+    .replace(/(ORT_WHATSAPP\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.whatsapp))
+    .replace(/(ORT_ORDERS_EMAIL\s*=\s*)(['"`])[^'"`]*\2/, (m, a) => a + JSON.stringify(s.orders_email));
+  src += `
+;(function(){
+  try { var P = \${JSON.stringify(activeProducts)};
+    if (typeof ORT_PRODUCTS !== 'undefined' && Array.isArray(ORT_PRODUCTS)) { ORT_PRODUCTS.length = 0; Array.prototype.push.apply(ORT_PRODUCTS, P); }
+  } catch (e) {}
+  try { if (window.fetch && !window.__ortCart) { window.__ortCart = 1; var f0 = window.fetch;
+    window.fetch = function (u, o) { try {
+      if (String(u).indexOf('/api/requests') !== -1 && o && o.body instanceof FormData && o.body.get('kind') === 'order' && !o.body.has('cart')) {
+        for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);
+          if (/cart/i.test(k)) { o.body.append('cart', localStorage.getItem(k)); break; } } }
+    } catch (e) {} return f0.apply(this, arguments); }; } } catch (e) {}
+})();
+`;
+  res.type('application/javascript').set('Cache-Control', 'no-cache').send(src);
+}));
+
+app.get('*', (req, res, next) => { 
+  if (req.url.startsWith('/api') || req.url.includes('.')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server cloud engine running smoothly on port ${PORT}`);
+  console.log(\`Server cloud engine running smoothly on port \${PORT}\`);
 });
