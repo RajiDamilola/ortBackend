@@ -224,7 +224,7 @@ if (!email && uid) {
 const uRes = await pool.query('SELECT email FROM users WHERE id = $1', [uid]);
 email = uRes.rows[0]?.email || null;
 }
-const files = (req.files ||).map(f => ({ field: f.fieldname, name: f.originalname, stored: f.filename, size: f.size, type: f.mimetype }));
+const files = (req.files || []).map(f => ({ field: f.fieldname, name: f.originalname, stored: f.filename, size: f.size, type: f.mimetype }));
 const info = await pool.query('INSERT INTO requests (kind, user_id, email, fields, files) VALUES ($1, $2, $3, $4, $5) RETURNING id',
 [kind, uid, email, JSON.stringify(fields), JSON.stringify(files)]);
 res.json({ success: true, id: info.rows[0].id });
